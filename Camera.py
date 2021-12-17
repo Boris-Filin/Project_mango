@@ -1,8 +1,6 @@
 import math
-from Tools import Vector2, Segment
-from BetterRay import BetterRay
+from Tools import Vector2, Segment, Ray
 from Angle import Angle
-from Ray import Ray
 
 
 class Camera():
@@ -30,28 +28,34 @@ class Camera():
 		self.objects = objects
 			
 	def update(self):
-		gradient = "▓@%#=+*:-."
+		gradient = "▓@%#+=*:-."
 		# gradient = "$@B%8&WM#|()1[]?-_+~\"^`,'."
 		# gradient = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/|()1[]?-_+~<>i!lI;:,\"^`'."
-		# gradient = "█▓▒░"
+		# gradient = "█▓▒░ "
+		render_distance = 100
 		iter_ang = self.fov.x / self.screen_size.x
 		for x in range(self.screen_size.x):
-			current_angle = Angle(self.rotation.add(
-				- iter_ang * x + self.fov.x / 2))
-			direction = Vector2(math.cos(current_angle.rads) * 0.1,
-			math.sin(current_angle.rads) * 0.1)
-			# ray = Ray(self.pos, direction, 100, self.objects)
-			ray = BetterRay(self.pos, direction, 100, self.objects)
-			if ray.cast():
-				brightness = 4 - (ray.distance + 1) / 2
-			else:
-				brightness = None
+			current_angle = self.rotation - iter_ang * x + self.fov.x / 2
+			direction = Vector2.polar_to_cartesian(0.1, current_angle.rad)
+			ray = Ray(self.pos, direction)
 
-			if ray.distance:
+			dist = render_distance + 1
+
+			for object_ in self.objects:
+				if ray.intersects(object_):
+					new_dist = ray.count_intersection(object_)
+					if new_dist != None:
+						dist = min(new_dist.magnitude, dist)
+			if dist > render_distance:
+				brightness = None
+			else:
+				brightness = 4 - (dist + 1) / 2
+
+			if brightness:
 				y_iter_ang = self.fov.y / self.screen_size.y
 				for y in range(0, self.screen_size.y - 1):
 					vertical_angle = Angle(y_iter_ang * y - self.fov.y / 2)
-					h = - (ray.distance) * math.tan(vertical_angle.rads) + 1.5
+					h = - dist * math.tan(vertical_angle.rad) + 1.5
 					if h >= 0 and h <= 2.5:
 						if brightness:
 							if brightness >= 4:
@@ -64,16 +68,6 @@ class Camera():
 									print(fac, brightness)
 							else:
 								self.screen[y][x] = gradient[-1]
-							# if brightness >= 4:
-							# 	self.screen[y][x] = "█"
-							# elif brightness >= 3:
-							# 	self.screen[y][x] = "▓"
-							# elif brightness >= 2.3:
-							# 	self.screen[y][x] = "▒"
-							# elif brightness >= 1:
-							# 	self.screen[y][x] = "░"
-							# else:
-							# 	self.screen[y][x] = "\'"
 					else:
 						self.screen[y][x] = " "
 			else:
@@ -81,23 +75,20 @@ class Camera():
 					self.screen[y][x] = " "
 
 	def displace(self, direction):
-		move = Segment(self.pos, self.pos.cast().add(direction))
+		move = Segment(self.pos, self.pos + direction)
 		intersection = False
 		for object_ in self.objects:
 			if object_.intersects(move):
-			# if move.intersects(object_):
 				intersection = True
 		if not intersection:
-			self.pos.add(direction)
+			self.pos += direction
 		return not intersection
 
 	def move(self, magnitude, precision=10):
-		direction = Vector2(math.cos(self.rotation.rads) * magnitude / precision,
-			math.sin(self.rotation.rads) * magnitude / precision)
+		direction = Vector2.polar_to_cartesian(magnitude / precision, self.rotation.rad)
 		for i in range(precision):
 			if not self.displace(direction):
 				break
-		# self.pos.add(direction)
 		
 	def test_print(self):
 		for y in range(len(self.screen)):

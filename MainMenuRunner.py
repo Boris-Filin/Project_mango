@@ -1,4 +1,3 @@
-import pygame
 import random
 import time
 import os
@@ -10,9 +9,6 @@ from Tools import Vector2, Segment
 from pynput import keyboard
 
 
-screen = terminal.get_terminal()
-screen.clear()
-pygame.init()
 
 class MainMenuRunner():
 	def __init__(self, actions, size=Vector2(200, 55)):
@@ -88,7 +84,8 @@ class MainMenuRunner():
 
 	def update(self, listener):
 		if self.done:
-			screen.gotoXY(1, 57)
+			screen.clear()
+			screen.gotoXY(1, 1)
 			quit()
 
 		if not self.stage == 2:
@@ -111,7 +108,8 @@ class MainMenuRunner():
 				self.fill_map_stage1()
 			if self.actions.has("continue"):
 				self.actions.clear()
-				self.game_runner = Runner(self.actions, self.levels[self.pointer_pos])
+				self.game_runner = Runner(self.actions, self.levels[self.pointer_pos], self.size)
+				screen.clear()
 				listener.on_press = self.game_runner.on_press
 				listener.on_release = self.game_runner.on_release
 				self.stage = 2
@@ -120,7 +118,6 @@ class MainMenuRunner():
 
 	def on_press(self, key):
 		if key == keyboard.Key.esc:
-			screen.gotoXY(1, 57)
 			self.done = True
 			return False
 		if self.stage == 0:
@@ -167,8 +164,12 @@ class CurrentActions():
 
 
 if __name__ == "__main__":
+	screen = terminal.get_terminal()
+	screen.clear()
+	terminal_size = os.get_terminal_size()
+
 	actions = CurrentActions()
-	runner = MainMenuRunner(actions)
+	runner = MainMenuRunner(actions, Vector2(terminal_size[0] - 2, terminal_size[1] - 2))
 
 	listener = keyboard.Listener(on_press=runner.on_press, on_release=runner.on_release)
 	listener.start()

@@ -16,7 +16,7 @@ screen.clear()
 pygame.init()
 
 class Runner():
-	def __init__(self, actions, map_name):
+	def __init__(self, actions, map_name, size=Vector2(200, 55)):
 		loaded_map = Loader(map_name)
 		objects = loaded_map.objects
 		self.initial_pos = loaded_map.player_pos
@@ -24,7 +24,7 @@ class Runner():
 		self.done = False
 
 		screen.set_color(15, 0)
-		self.camera = Camera(self.initial_pos, self.initial_rotation)
+		self.camera = Camera(self.initial_pos, self.initial_rotation, size)
 		self.camera.update_objects(objects)
 		self.camera.update()
 		self.map_ = self.camera.send_screen()
@@ -40,7 +40,8 @@ class Runner():
 
 	def update(self):
 		if self.done:
-			screen.gotoXY(1, 57)
+			screen.clear()
+			screen.gotoXY(1, 1)
 			quit()
 
 		self.player_movement()
@@ -51,7 +52,6 @@ class Runner():
 
 	def on_press(self, key):
 		if key == keyboard.Key.esc:
-			screen.gotoXY(1, 57)
 			self.done = True
 			return False
 		try:
@@ -83,9 +83,9 @@ class Runner():
 
 	def player_movement(self):
 		if self.actions.has("left"):
-			self.camera.rotation.rotate(5)
+			self.camera.rotation += 5
 		if self.actions.has("right"):
-			self.camera.rotation.rotate(-5)
+			self.camera.rotation -= 5
 		if self.actions.has("back"):
 			self.camera.move(-0.1)
 		if self.actions.has("forward"):

@@ -7,33 +7,71 @@ class Vector2:
 		self.x = x
 		self.y = y
 
-	def castadd(self, new_vector):
-		return Vector2(self.x + new_vector.x, self.y + new_vector.y)
-		
-	def add(self, new_vector):
-		self.x += new_vector.x
-		self.y += new_vector.y
-		return self
-		
+	@property
+	def magnitude(self):
+		return math.sqrt(self.x ** 2 + self.y ** 2)
+
+	@property
+	def unit(self):
+		if self.magnitude == 0:
+			return Vector2()
+		return Vector2(self.x / self.magnitude, self.y / self.magnitude)
+
+	@property
+	def normal(self):
+		return Vector2(self.y, -self.x)
+
+	def dot(self, vector):
+		return self.x * vector.x + self.y * vector.y
+
+	def angle(self, vector):
+		return Angle(math.acos(self.dot(vector) / (self.magnitude * vector.magnitude)), in_rads=True)
+
 	def cast(self):
 		return Vector2(self.x, self.y)
 
-	def multiply(self, value):
-		return Vector2(self.x * value, self.y * value)
+	def __add__(self, vector):
+		return Vector2(self.x + vector.x, self.y + vector.y)
 
-	def matches(self, new_vector):
-		if self.x == new_vector.x and self.y == new_vector.y:
-			return True
-		return False
+	def __iadd__(self, vector):
+		self.x += vector.x
+		self.y += vector.y
+		return self
 
-	def bearing(self, new_vector):
-		resulting_angle = Angle()
-		a = math.sqrt(self.x ** 2 + self.y ** 2)
-		b = math.sqrt(new_vector.x ** 2 + new_vector.y ** 2)
-		c = math.sqrt((new_vector.x - self.x) ** 2 + (new_vector.y - self.y) ** 2)
-		resulting_angle.convert_from_rads(math.acos((a ** 2 + b ** 2 - c ** 2) / (2 * a * b)))
-		return resulting_angle
+	def __sub__(self, vector):
+		return Vector2(self.x - vector.x, self.y - vector.y)
 
+	def __isub__(self, vector):
+		self.x -= vector.x
+		self.y -= vector.y
+		return self
+
+	def __mul__(self, val):
+		return Vector2(self.x * val, self.y * val)
+
+	def __imul__(self, val):
+		self.x *= val
+		self.y *= val
+		return self
+
+	def __div__(self, val):
+		if val == 0:
+			raise ZeroDivisionError
+		return Vector2(self.x / val, self.y / val)
+
+	def __idiv__(self, val):
+		if val == 0:
+			raise ZeroDivisionError
+		self.x /= val
+		self.y /= val
+		return self
+
+	def __str__(self):
+		return "Vector2: x = {}, y = {}".format(self.x, self.y)
+
+	@staticmethod
+	def polar_to_cartesian(r, rad):
+		return Vector2(r * math.cos(rad), r * math.sin(rad))
 
 class Equation:
 	def __init__(self, a=0, b=0, c=0):
@@ -54,63 +92,29 @@ class Equation:
 			self.c = - pos_a.y
 		else:
 			self.c = (pos_a.y - (dy / dx) * pos_a.x) * dx
-		
-	def intersects(self, other_equation):
-		a1 = self.a
-		b1 = self.b
-		c1 = self.c
-		a2 = other_equation.a
-		b2 = other_equation.b
-		c2 = other_equation.c
-		if b1 == 0 and b2 == 0:
-			if a1 != a2:
-				return None
-			else:
-				return - c1
-		elif b1 == 0:
-			return - c1
-		elif b2 == 0:
-			return - c2
-		else:
-			if a1 * b2 - a2 * b1 == 0:
-				return None
-			x_intersect = - (c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1)
-			return x_intersect
 
-	def count_intersection(self, other_equation, origin):
+	def count_intersection(self, equation):
 		a1 = self.a
 		b1 = self.b
 		c1 = self.c
-		a2 = other_equation.a
-		b2 = other_equation.b
-		c2 = other_equation.c
-		intersection = None
-		if b1 == 0 and b2 == 0:
-			if a1 != a2:
-				intersection = None
-			else:
-				intersection = Vector2(- c1, origin.y)
-		elif b1 == 0:
-			intersection = Vector2(- c1, (- c2 + a2 * c1) / b2)
-		elif b2 == 0:
-			intersection = Vector2(- c2, (- c1 + a1 * c2) / b1)
-		elif a1 == 0 and a2 == 0:
-			intersection = None
-		else:
-			if a1 * b2 - a2 * b1 == 0:
-				intersection = None
-			else:
-				x_intersect = - (c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1)
-				intersection = Vector2(x_intersect, (c1 + a1 * x_intersect) / (- b1))
-		return intersection
-		
-	def print_self(self):
-		print(">>>: " + str(self.a) + "x + " + str(self.b) + "y + " + str(self.c))
+		a2 = equation.a
+		b2 = equation.b
+		c2 = equation.c
+		div = (a1 * b2 - a2 * b1)
+		if div == 0:
+			return None
+		x = (b1 * c2 - b2 * c1) / div
+		y = (c1 * a2 - c2 * a1) / div
+		return Vector2(x, y)
+
+	def __str__(self):
+		return str(self.a) + "x + " + str(self.b) + "y + " + str(self.c)
 
 class Segment():
 	def __init__(self, pos_a, pos_b):
 		self.pos_a = pos_a
 		self.pos_b = pos_b
+		self.normal = (pos_a - pos_b).normal
 		if self.pos_a.x > self.pos_b.x:
 			self.pos_a, self.pos_b = self.pos_b, self.pos_a
 		self.equation = Equation()
@@ -123,133 +127,53 @@ class Segment():
 		self.equation.make_equation(pos_a, pos_b)
 		self.direction = Vector2(pos_a.x - pos_b.x, pos_a.y - pos_b.y)
 	
-	def includes(self, pos):
-		a = self.equation.a
-		b = self.equation.b
-		c = self.equation.c
-		x = pos.x
-		y = pos.y
-		d = (a * x + b * y + c) / math.sqrt(a ** 2 + b ** 2)
-		if abs(d) < 0.5 and (self.pos_a.x <= x and self.pos_b.x >= x):
-			return True
-		else:
+	def intersects(self, segment):
+		if self.normal.dot(segment.pos_a - self.pos_a) * self.normal.dot(segment.pos_b - self.pos_a) > 0:
 			return False
-
-	def intersects_old(self, other_segment):
-		x = self.equation.intersects(other_segment.equation)
-		if x == None:
+		if segment.normal.dot(self.pos_a - segment.pos_a) * segment.normal.dot(self.pos_b - segment.pos_a) > 0:
 			return False
-		if (self.pos_a.x <= x and x <= self.pos_b.x) and (
-			other_segment.pos_a.x <= x and x <= other_segment.pos_b.x):
-				return True
-		return False
-
-	def intersects(self, other_segment):
-		intersection = self.equation.count_intersection(other_segment.equation, self.pos_a)
-		if intersection != None:
-			if self.has_point(intersection) and other_segment.has_point(intersection):
-				return True
-		return False
-
-	def has_point(self, pos):
-		if self.pos_a.x <= pos.x and pos.x <= self.pos_b.x:
-			if self.pos_a.x == self.pos_b.x:
-				 if (self.pos_a.y <= pos.y and pos.y <= self.pos_b.y) or (self.pos_b.y <= pos.y and pos.y <= self.pos_a.y):
-				 	return True
-				 else:
-				 	return False
-			else:
-				return True
-		else:
-			return False
-
-class MathRay():
-	def __init__(self, pos, direction):
-		self.pos = pos
-		self.equation = Equation()
-		self.make_equation(direction)
-		self.pointing = Vector2(self.sign(direction.x), self.sign(direction.y))
-
-	def make_equation(self, direction):
-		endpoint = self.pos.cast().add(direction)
-		if endpoint.x < self.pos.x:
-			self.equation.make_equation(endpoint, self.pos)
-		else:
-			self.equation.make_equation(self.pos, endpoint)
+		return True
 
 	def count_intersection(self, segment):
-		intersection = self.equation.count_intersection(segment.equation, self.pos)
-		if intersection != None:
-			if self.if_matches(intersection) and segment.has_point(intersection):
-				dist = math.sqrt((intersection.x - self.pos.x) ** 2 + (intersection.y - self.pos.y) ** 2)
-				return dist
-			else:
-				return None
-		else:
+		return self.equation.count_intersection(segment.equation)
+
+class Ray():
+	def __init__(self, pos, direction):
+		self.pos = pos
+		self.direction = direction.unit
+		self.normal = direction.normal
+		self.equation = Equation()
+		self.equation.make_equation(pos, pos + direction)
+
+	def count_intersection(self, segment):
+		intersection = self.equation.count_intersection(segment.equation)
+		if not self.check_point(intersection):
 			return None
+		return self.equation.count_intersection(segment.equation) - self.pos
+
+	def intersects(self, segment):
+		if self.normal.dot(segment.pos_a - self.pos) * self.normal.dot(segment.pos_b - self.pos) >= 0:
+			return False
+		return True
+
+	def check_point(self, vector):
+		return self.direction.dot(vector - self.pos) >= 0
 
 	def if_matches(self, new_pos):
-		if self.pointing.x == 1:
-			if self.pointing.y == 1:
-				if new_pos.x >= self.pos.x and new_pos.y >= self.pos.y:
-					return True
-				else:
-					return False
-			elif self.pointing.y == 0:
-				if new_pos.x >= self.pos.x:
-					return True
-				else:
-					return False
-			else:
-				if new_pos.x >= self.pos.x and new_pos.y <= self.pos.y:
-					return True
-				else:
-					return False
-		elif self.pointing.x == 0:
-			if self.pointing.y == 1:
-				if new_pos.y >= self.pos.y:
-					return True
-				else:
-					return False
-			elif pointing.y == 0:
-				return False
-			else:
-				if new_pos.y <= self.pos.y:
-					return True
-				else:
-					return False
-		else:
-			if self.pointing.y == 1:
-				if new_pos.x <= self.pos.x and new_pos.y >= self.pos.y:
-					return True
-				else:
-					return False
-			elif self.pointing.y == 0:
-				if new_pos.x <= self.pos.x:
-					return True
-				else:
-					return False
-			else:
-				if new_pos.x <= self.pos.x and new_pos.y <= self.pos.y:
-					return True
-				else:
-					return False
+		return self.direction.dot(new_pos - self.pos) >= 0
 
-	def sign(self, x):
-		if x < 0:
-			return - 1
-		elif x == 0:
-			return 0
-		else:
-			return 1
-
-# v1 = Vector2(1, 0)
-# v2 = Vector2(1, 1)
-# print(v1.bearing(v2).angle)
-
-
-
-
-
-			
+if __name__ == "__main__":
+	# a = Vector2(2, 3)
+	# b = Vector2(-3, 2)
+	# print(a, b)
+	# print(a + b)
+	# a *= 3
+	# print(a, b)
+	# print("DP", a.dot(b))
+	# print("Angle", a.angle(b))
+	# print(a.normal)
+	r = MathRay(Vector2(1, 1), Vector2(2, 1))
+	s1 = Segment(Vector2(6, 1), Vector2(3, 3))
+	print(r.intersects(s1))
+	print(r.count_intersection(s1))
 
