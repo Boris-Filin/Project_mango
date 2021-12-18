@@ -33,10 +33,12 @@ class Runner():
 
 	def print_map(self):
 		screen.gotoXY(1, 1)
+		print()
 		for y in range(len(self.map_)):
-			print()
-			for x in range(len(self.map_[y])):
-				print(self.map_[y][x], end='')
+			# print()
+			# for x in range(len(self.map_[y])):
+			# 	print(self.map_[y][x], end='')
+			print("".join(self.map_[y]))
 
 	def update(self):
 		if self.done:

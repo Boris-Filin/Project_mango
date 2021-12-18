@@ -78,6 +78,7 @@ class Equation:
 		self.a = a
 		self.b = b
 		self.c = c
+		self.a2b2 = math.sqrt(a ** 2 + b ** 2)
 
 	def make_equation(self, pos_a, pos_b):
 		dx = pos_b.x - pos_a.x
@@ -92,6 +93,7 @@ class Equation:
 			self.c = - pos_a.y
 		else:
 			self.c = (pos_a.y - (dy / dx) * pos_a.x) * dx
+		self.a2b2 = math.sqrt(self.a ** 2 + self.b ** 2)
 
 	def count_intersection(self, equation):
 		a1 = self.a
@@ -107,6 +109,9 @@ class Equation:
 		y = (c1 * a2 - c2 * a1) / div
 		return Vector2(x, y)
 
+	def dist_to_point(self, vector):
+		return abs(self.a * vector.x + self.b * vector.y + self.c) / self.a2b2
+
 	def __str__(self):
 		return str(self.a) + "x + " + str(self.b) + "y + " + str(self.c)
 
@@ -119,7 +124,7 @@ class Segment():
 			self.pos_a, self.pos_b = self.pos_b, self.pos_a
 		self.equation = Equation()
 		self.equation.make_equation(pos_a, pos_b)
-		self.direction = Vector2(pos_a.x - pos_b.x, pos_a.y - pos_b.y)
+		self.direction = pos_a - pos_b
 
 	def set_vertices(self, new_pos_a, new_pos_b):
 		self.pos_a = new_pos_a
@@ -134,8 +139,14 @@ class Segment():
 			return False
 		return True
 
+	def check_point(self, vector):
+		return self.direction.dot(vector - self.pos_a) * self.direction.dot(vector - self.pos_b) < 0
+
 	def count_intersection(self, segment):
 		return self.equation.count_intersection(segment.equation)
+
+	def dist_to_point(self, vector, do_dot_stuff=True):
+		return min((self.pos_a - vector).magnitude, (self.pos_b - vector).magnitude, self.equation.dist_to_point(vector))
 
 class Ray():
 	def __init__(self, pos, direction):
@@ -147,9 +158,9 @@ class Ray():
 
 	def count_intersection(self, segment):
 		intersection = self.equation.count_intersection(segment.equation)
-		if not self.check_point(intersection):
+		if intersection == None or not self.check_point(intersection):
 			return None
-		return self.equation.count_intersection(segment.equation) - self.pos
+		return intersection - self.pos
 
 	def intersects(self, segment):
 		if self.normal.dot(segment.pos_a - self.pos) * self.normal.dot(segment.pos_b - self.pos) >= 0:
