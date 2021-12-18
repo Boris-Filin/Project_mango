@@ -1,13 +1,10 @@
 import random
 import time
 import os
-from multiprocessing import Process
 from colorconsole import terminal
-from threading import Thread
 from Runner import Runner
-from Tools import Vector2, Segment
+from Vector2 import Vector2
 from pynput import keyboard
-
 
 
 class MainMenuRunner():
@@ -20,7 +17,6 @@ class MainMenuRunner():
 		self.fill_map_stage0()
 		self.pointer_pos = 0
 		self.done = False
-		# self.print_map()
 
 	def print_map(self):
 		screen.gotoXY(1, 1)
@@ -40,10 +36,12 @@ class MainMenuRunner():
 					self.map[y].append("█")
 				else:
 					self.map[y].append(" ")
-		self.put_string("Please resize your screen so that the white outline looks like a rectangle", Vector2(100, 25), True)
-		self.put_string("Press SPACE when ready", Vector2(100, 27), True)
-		self.put_string("The project is dedicated to Dmitry Filin!", Vector2(100, 15), True)
-		self.put_string("HAPPY BIRTDAY! =D", Vector2(100, 17), True)
+
+		x_center = self.size.x // 2
+		self.put_string("Please resize your screen so that the white outline looks like a rectangle", Vector2(x_center, 25), True)
+		self.put_string("Press SPACE when ready", Vector2(x_center, 27), True)
+		self.put_string("The project is dedicated to Dmitry Filin!", Vector2(x_center, 15), True)
+		self.put_string("HAPPY BIRTDAY! =D", Vector2(x_center, 17), True)
 
 	def fill_map_stage1(self):
 		for y in range(self.size.y):
@@ -52,25 +50,26 @@ class MainMenuRunner():
 					self.map[y][x] = "█"
 				else:
 					self.map[y][x] = " "
-		self.put_string("Choose level:", Vector2(100, 5), True)
-		self.put_string("(Use ARROW UP or ARROW DOWN to navigate, press SPACE when ready)", Vector2(100, 7), True)
-		self.put_string("Use ESC to quit", Vector2(100, 48), True)
-		self.put_string("Use W, S to move around", Vector2(100, 50), True)
-		self.put_string("Use A, D to rotate the camera", Vector2(100, 52), True)
+		x_center = self.size.x // 2
+		self.put_string("Choose level:", Vector2(x_center, 5), True)
+		self.put_string("(Use ARROW UP or ARROW DOWN to navigate, press SPACE when ready)", Vector2(x_center, 7), True)
+		self.put_string("Use ESC to quit", Vector2(x_center, 48), True)
+		self.put_string("Use W, S to move around", Vector2(x_center, 50), True)
+		self.put_string("Use A, D to rotate the camera", Vector2(x_center, 52), True)
 		for l in self.levels:
 			if not ".txt" in l:
 				self.levels.remove(l)
 		for i in range(len(self.levels)):
 			height =  12 + i * 3 - self.pointer_pos * 3
 			if height <= 10:
-				self.put_string(" . . . ", Vector2(100, 10), True)
+				self.put_string(" . . . ", Vector2(x_center, 10), True)
 			elif height >= 45:
-				self.put_string(" . . . ", Vector2(100, 45), True)				
+				self.put_string(" . . . ", Vector2(x_center, 45), True)				
 			else:
 				if i == self.pointer_pos:
-					self.put_string("===>   -= " + self.levels[i].replace(".txt", "") + " =-   <===", Vector2(100, height), True)
+					self.put_string("===>   -= " + self.levels[i].replace(".txt", "") + " =-   <===", Vector2(x_center, height), True)
 				else:
-					self.put_string("-= " + self.levels[i].replace(".txt", "") + " =-", Vector2(100, height), True)
+					self.put_string("-= " + self.levels[i].replace(".txt", "") + " =-", Vector2(x_center, height), True)
 
 	def put_string(self, s, pos, centered=False):
 		for i in range(len(s)):
@@ -89,7 +88,6 @@ class MainMenuRunner():
 			quit()
 
 		if not self.stage == 2:
-			# self.handle_input()
 			self.print_map()
 		if self.stage == 0:
 			if self.actions.has("continue"):
@@ -108,7 +106,7 @@ class MainMenuRunner():
 				self.fill_map_stage1()
 			if self.actions.has("continue"):
 				self.actions.clear()
-				self.game_runner = Runner(self.actions, self.levels[self.pointer_pos], self.size)
+				self.game_runner = Runner(screen, self.actions, self.levels[self.pointer_pos], self.size)
 				screen.clear()
 				listener.on_press = self.game_runner.on_press
 				listener.on_release = self.game_runner.on_release
@@ -134,8 +132,6 @@ class MainMenuRunner():
 	def on_release(self, key):
 		pass
 
-
-
 class CurrentActions():
 	def __init__(self):
 		self.actions = []
@@ -160,9 +156,6 @@ class CurrentActions():
 		self.actions = []
 
 
-
-
-
 if __name__ == "__main__":
 	screen = terminal.get_terminal()
 	screen.clear()
@@ -179,11 +172,3 @@ if __name__ == "__main__":
 		time.sleep(0.03)
 
 listener.join()  
-
-
-
-# █, ▓, ▒, ░,  
-
-
-
-

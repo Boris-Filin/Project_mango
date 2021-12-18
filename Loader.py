@@ -1,5 +1,7 @@
 import os
-from Tools import Vector2, Segment
+import re
+from Vector2 import Vector2
+from Segment import Segment
 from Angle import Angle
 
 class Loader():
@@ -21,7 +23,7 @@ class Loader():
 	def decode_lines(self):
 		for l in self.lines:
 			line = l.strip().lower()
-			line = line.replace(",", "").replace("(", "").replace(")", "").replace(";", "")
+			line = re.sub(r"[,();]", "", line)
 			line = line.split()
 			try:
 				if line[0] == "s":
@@ -34,4 +36,4 @@ class Loader():
 				if line[0] == "r":
 					self.player_rotation = Angle(float(line[1]))
 			except:
-				pass
+				continue

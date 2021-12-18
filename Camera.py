@@ -1,5 +1,6 @@
 import math
-from Tools import Vector2, Segment, Ray
+from Vector2 import Vector2
+from Segment import Segment
 from Angle import Angle
 
 
@@ -24,7 +25,6 @@ class Camera():
 		for y in range(self.screen_size.y):
 			self.screen.append([])
 			for x in range(self.screen_size.x):
-				# self.screen[y] = " " * self.screen_size.x
 				self.screen[y].append(" ")
 				
 	def send_screen(self):
@@ -34,42 +34,33 @@ class Camera():
 		self.objects = objects
 			
 	def update(self):
-		gradient = "█▓▒░ "
-
+		gradient = "█" * 2 + "▓" * 3 + "▒" * 3 + "░" * 3 +" "
+		# floor = "░"
 		render_distance = 8
+
 		iter_ang = self.fov.x / self.screen_size.x
+		
 		for x in range(self.screen_size.x):
+			
 			current_angle = self.rotation - iter_ang * x + self.fov.x / 2
-			direction = Vector2.polar_to_cartesian(0.1, current_angle.rad)
-			ray = Ray(self.pos, direction)
+			direction = Vector2.polar_to_cartesian(render_distance, current_angle.rad)
+			ray = Segment(self.pos, self.pos + direction)
 
 			dist = render_distance + 1
 
 			for object_ in self.objects:
 				if ray.intersects(object_):
-					new_dist = ray.count_intersection(object_)
+					new_dist = ray.count_intersection(object_) - self.pos
 					if new_dist != None:
 						dist = min(new_dist.magnitude, dist)
-			if dist > render_distance:
-				brightness = None
-			else:
-				brightness = (render_distance - dist) / 2
 
-			if brightness and brightness >= 0:
+			if dist <= render_distance:
 
-				ru = self.du0 / dist
-				rd = self.dd0 / dist
+				pix_u = int(self.screen_size.y * self.du0 / dist)
+				pix_d = int(self.screen_size.y * self.dd0 / dist)
 
-				pix_u = int(self.screen_size.y * ru)
-				pix_d = int(self.screen_size.y * rd)
-
-				if brightness >= 4:
-					char_ = gradient[0]
-				elif brightness >= 0:
-					fac = math.floor((4 - brightness) / 4 * (len(gradient) - 1))
-					char_ = gradient[fac]
-				else:
-					char_ = gradient[-1]
+				fac = math.floor(dist / render_distance * (len(gradient) - 1))
+				char_ = gradient[fac]
 
 				slabbed_u = pix_u % 2
 				slabbed_d = pix_d % 2
@@ -86,9 +77,13 @@ class Camera():
 						self.screen[y][x] = "▀"
 					else:
 						self.screen[y][x] = gradient[-1]
+						# if y >= self.screen_size.y * 0.61:
+						# 	self.screen[y][x] = floor
 			else:
 				for y in range(self.screen_size.y):
 					self.screen[y][x] = gradient[-1]
+					# if y >= self.screen_size.y * 0.61:
+					# 	self.screen[y][x] = floor
 
 	def displace(self, direction):
 		move = Segment(self.pos, self.pos + direction)
@@ -100,16 +95,8 @@ class Camera():
 			self.pos += direction
 		return not intersection
 
-	def move(self, magnitude, precision=10):
+	def move(self, magnitude, precision=5):
 		direction = Vector2.polar_to_cartesian(magnitude / precision, self.rotation.rad)
 		for i in range(precision):
 			if not self.displace(direction):
 				break
-		
-	def test_print(self):
-		for y in range(len(self.screen)):
-			print(".", end='')
-			for x in range(len(self.screen[0])):
-				print(self.screen[y][x], end='')
-			print(".")
-

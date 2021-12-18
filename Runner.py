@@ -1,49 +1,39 @@
-import pygame
 import random
 import time
-from multiprocessing import Process
 from colorconsole import terminal
-from threading import Thread
-from GameMap import GameMap
 from Camera import Camera
 from Loader import Loader
-from Tools import Vector2, Segment
+from Vector2 import Vector2
 from pynput import keyboard
 
 
-screen = terminal.get_terminal()
-screen.clear()
-pygame.init()
-
 class Runner():
-	def __init__(self, actions, map_name, size=Vector2(200, 55)):
+	def __init__(self, screen, actions, map_name, size=Vector2(200, 55)):
 		loaded_map = Loader(map_name)
 		objects = loaded_map.objects
 		self.initial_pos = loaded_map.player_pos
 		self.initial_rotation = loaded_map.player_rotation
 		self.done = False
 
-		screen.set_color(15, 0)
+		# screen.set_color(15, 0)
 		self.camera = Camera(self.initial_pos, self.initial_rotation, size)
 		self.camera.update_objects(objects)
 		self.camera.update()
 		self.map_ = self.camera.send_screen()
 
 		self.actions = actions
+		self.screen = screen
 
 	def print_map(self):
-		screen.gotoXY(1, 1)
+		self.screen.gotoXY(1, 1)
 		print()
 		for y in range(len(self.map_)):
-			# print()
-			# for x in range(len(self.map_[y])):
-			# 	print(self.map_[y][x], end='')
 			print("".join(self.map_[y]))
 
 	def update(self):
 		if self.done:
-			screen.clear()
-			screen.gotoXY(1, 1)
+			self.screen.clear()
+			self.screen.gotoXY(1, 1)
 			quit()
 
 		self.player_movement()
@@ -92,41 +82,3 @@ class Runner():
 			self.camera.move(-0.1)
 		if self.actions.has("forward"):
 			self.camera.move(0.1)
-
-
-class CurrentActions():
-	def __init__(self):
-		self.actions = []
-
-	def add(self, action):
-		if not action in self.actions:
-			self.actions.append(action)
-
-	def remove(self, action):
-		if action in self.actions:
-			self.actions.remove(action)
-
-	def has(self, action):
-		if action in self.actions:
-			return True
-		return False
-
-	def leave_only(self, action):
-		self.actions = [action]
-
-
-# if __name__ == "__main__":
-# 	actions = CurrentActions()
-
-# 	runner = Runner(actions)
-# 	while True:	
-# 		runner.update()
-# 		time.sleep(0.01)
-
-
-
-
-
-
-
-

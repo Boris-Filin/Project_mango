@@ -80,10 +80,3 @@ class Angle:
 
 	def __str__(self):
 		return "{}° ({} rad)".format(self.deg, self.rad)
-
-
-if __name__ == "__main__":
-	a = Angle(5 / 2 * math.pi, in_rads = True)
-	b = Angle(-135)
-	print(a, b)
-	print(a - b)
