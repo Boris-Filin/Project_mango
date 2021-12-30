@@ -25,14 +25,9 @@ class Angle:
 	def rad(self):
 		return self.deg * math.pi / 180
 
-
 	@staticmethod
 	def rads_to_degrees(rad):
 		return rad / math.pi * 180
-
-	@staticmethod
-	def degrees_to_rads(deg):
-		return deg * math.pi / 180
 
 	def __add__(self, val):
 		try:

@@ -7,7 +7,7 @@ from Vector2 import Vector2
 from pynput import keyboard
 
 
-class MainMenuRunner():
+class Main():
 	def __init__(self, actions, size=Vector2(200, 55)):
 		screen.set_color(15, 0)
 		self.actions = actions
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 	terminal_size = os.get_terminal_size()
 
 	actions = CurrentActions()
-	runner = MainMenuRunner(actions, Vector2(terminal_size[0] - 2, terminal_size[1] - 2))
+	runner = Main(actions, Vector2(terminal_size[0] - 2, terminal_size[1] - 2))
 
 	listener = keyboard.Listener(on_press=runner.on_press, on_release=runner.on_release)
 	listener.start()
