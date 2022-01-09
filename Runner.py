@@ -76,8 +76,10 @@ class Runner():
 	def player_movement(self):
 		if self.actions.has("left"):
 			self.camera.rotation += 5
+			self.camera.rotation %= 360
 		if self.actions.has("right"):
 			self.camera.rotation -= 5
+			self.camera.rotation %= 360
 		if self.actions.has("back"):
 			self.camera.move(-0.1)
 		if self.actions.has("forward"):

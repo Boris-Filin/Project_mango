@@ -1,11 +1,10 @@
 import math
 from Vector2 import Vector2
 from Segment import Segment
-from Angle import Angle
 
 
 class Camera():
-	def __init__(self, pos=Vector2(), rotation=Angle(),
+	def __init__(self, pos=Vector2(), rotation=0,
 		screen_size=Vector2(200, 55), fov=Vector2(120, 80), **kwargs):
 			self.pos = pos.cast()
 			self.rotation = rotation
@@ -43,7 +42,7 @@ class Camera():
 		for x in range(self.screen_size.x):
 			
 			current_angle = self.rotation - iter_ang * x + self.fov.x / 2
-			direction = Vector2.polar_to_cartesian(render_distance, current_angle.rad)
+			direction = Vector2.polar_to_cartesian(render_distance, current_angle)
 			ray = Segment(self.pos, self.pos + direction)
 
 			dist = render_distance + 1
@@ -96,7 +95,7 @@ class Camera():
 		return not intersection
 
 	def move(self, magnitude, precision=5):
-		direction = Vector2.polar_to_cartesian(magnitude / precision, self.rotation.rad)
+		direction = Vector2.polar_to_cartesian(magnitude / precision, self.rotation)
 		for i in range(precision):
 			if not self.displace(direction):
 				break

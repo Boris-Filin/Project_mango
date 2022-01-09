@@ -1,5 +1,4 @@
 import math
-from Angle import Angle
 
 
 class Vector2:
@@ -25,7 +24,7 @@ class Vector2:
 		return self.x * vector.x + self.y * vector.y
 
 	def angle(self, vector):
-		return Angle(math.acos(self.dot(vector) / (self.magnitude * vector.magnitude)), in_rads=True)
+		return math.degrees(math.acos(self.dot(vector) / (self.magnitude * vector.magnitude)))
 
 	def cast(self):
 		return Vector2(self.x, self.y)
@@ -70,5 +69,7 @@ class Vector2:
 		return "Vector2: x = {}, y = {}".format(self.x, self.y)
 
 	@staticmethod
-	def polar_to_cartesian(r, rad):
-		return Vector2(r * math.cos(rad), r * math.sin(rad))
+	def polar_to_cartesian(r, ang, in_rad=False):
+		if not in_rad:
+			ang = math.radians(ang)
+		return Vector2(r * math.cos(ang), r * math.sin(ang))

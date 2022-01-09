@@ -1,15 +1,13 @@
-import os
 import re
 from Vector2 import Vector2
 from Segment import Segment
-from Angle import Angle
 
 class Loader():
 	def __init__(self, file_name):
 		self.lines = self.load_file(file_name)
 		self.objects = []
 		self.player_pos = Vector2()
-		self.player_rotation = Angle()
+		self.player_rotation = 0
 		self.decode_lines()
 
 	def load_file(self, file_name):
@@ -34,6 +32,6 @@ class Loader():
 				if line[0] == "p":
 					self.player_pos = Vector2(float(line[1]), float(line[2]))
 				if line[0] == "r":
-					self.player_rotation = Angle(float(line[1]))
+					self.player_rotation = float(line[1])
 			except:
 				continue
