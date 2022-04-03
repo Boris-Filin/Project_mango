@@ -23,6 +23,9 @@ class Vector2:
 	def dot(self, vector):
 		return self.x * vector.x + self.y * vector.y
 
+	def cross2D(self, vector):
+		return self.x * vector.y - self.y * vector.x
+
 	def angle(self, vector):
 		return math.degrees(math.acos(self.dot(vector) / (self.magnitude * vector.magnitude)))
 

@@ -9,7 +9,7 @@ from pynput import keyboard
 
 class Runner():
 	def __init__(self, screen, actions, map_name, size=Vector2(200, 55)):
-		loaded_map = Loader(map_name)
+		loaded_map = Loader(map_name, screen)
 		objects = loaded_map.objects
 		self.initial_pos = loaded_map.player_pos
 		self.initial_rotation = loaded_map.player_rotation
@@ -24,13 +24,23 @@ class Runner():
 		self.actions = actions
 		self.screen = screen
 
+		self.player_speed = 2
+		self.player_rotation_speed = 90
+
+		self.elapsed_time = 0
+		self.last_time = time.time()
+
 	def print_map(self):
 		self.screen.gotoXY(1, 1)
 		print()
 		for y in range(len(self.map_)):
 			print("".join(self.map_[y]))
+			# pass
 
 	def update(self):
+		self.elapsed_time = time.time() - self.last_time
+		self.last_time = time.time()
+
 		if self.done:
 			self.screen.clear()
 			self.screen.gotoXY(1, 1)
@@ -75,12 +85,12 @@ class Runner():
 
 	def player_movement(self):
 		if self.actions.has("left"):
-			self.camera.rotation += 5
+			self.camera.rotation += self.player_rotation_speed * self.elapsed_time
 			self.camera.rotation %= 360
 		if self.actions.has("right"):
-			self.camera.rotation -= 5
+			self.camera.rotation -= self.player_rotation_speed * self.elapsed_time
 			self.camera.rotation %= 360
 		if self.actions.has("back"):
-			self.camera.move(-0.1)
+			self.camera.move(-self.player_speed * self.elapsed_time)
 		if self.actions.has("forward"):
-			self.camera.move(0.1)
+			self.camera.move(self.player_speed * self.elapsed_time)

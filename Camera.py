@@ -46,50 +46,69 @@ class Camera():
 			ray = Segment(self.pos, self.pos + direction)
 
 			dist = render_distance + 1
+			collision = None
 
 			for object_ in self.objects:
-				if ray.intersects(object_):
-					new_dist = ray.count_intersection(object_) - self.pos
+				segment = object_.segment
+				if ray.intersects(segment):
+					new_dist = ray.count_intersection(segment) - self.pos
 					if new_dist != None:
-						dist = min(new_dist.magnitude, dist)
+						if new_dist.magnitude < dist:
+							dist = new_dist.magnitude
+							collision = object_
 
-			if dist <= render_distance:
-
-				pix_u = int(self.screen_size.y * self.du0 / dist)
-				pix_d = int(self.screen_size.y * self.dd0 / dist)
-
-				fac = math.floor(dist / render_distance * (len(gradient) - 1))
-				char_ = gradient[fac]
-
-				slabbed_u = pix_u % 2
-				slabbed_d = pix_d % 2
-
-				min_ = max(int(self.screen_size.y / 2) - pix_u // 2 + 1, 0)
-				max_ = min(int(self.screen_size.y / 2) + pix_d // 2, self.screen_size.y)
-
-				for y in range(self.screen_size.y):
-					if y >= min_ and y <= max_:
-						self.screen[y][x] = char_
-					elif y == min_ - 1 and slabbed_u:
-						self.screen[y][x] = "▄"
-					elif y == max_ + 1 and slabbed_d:
-						self.screen[y][x] = "▀"
-					else:
-						self.screen[y][x] = gradient[-1]
-						# if y >= self.screen_size.y * 0.61:
-						# 	self.screen[y][x] = floor
-			else:
+			# if dist <= render_distance:
+			if collision is None:
 				for y in range(self.screen_size.y):
 					self.screen[y][x] = gradient[-1]
 					# if y >= self.screen_size.y * 0.61:
 					# 	self.screen[y][x] = floor
+				continue
+
+
+			pix_u = int(self.screen_size.y * self.du0 / dist)
+			pix_d = int(self.screen_size.y * self.dd0 / dist)
+
+			fac = math.floor(dist / render_distance * (len(gradient) - 1))
+			
+			if len(collision.filling) != 1:
+				char_ = gradient[fac]
+			else:
+				char_ = collision.filling
+
+			# char_ = " "
+
+			slabbed_u = pix_u % 2 and collision.slabbable
+			slabbed_d = pix_d % 2 and collision.slabbable
+
+			min_ = max(int(self.screen_size.y / 2) - pix_u // 2 + 1, 0)
+			max_ = min(int(self.screen_size.y / 2) + pix_d // 2, self.screen_size.y)
+
+			for y in range(self.screen_size.y):
+				if y >= min_ and y <= max_:
+					self.screen[y][x] = char_
+				elif y == min_ - 1 and slabbed_u:
+					self.screen[y][x] = "▄"
+				elif y == max_ + 1 and slabbed_d:
+					self.screen[y][x] = "▀"
+				else:
+					self.screen[y][x] = gradient[-1]
+					# if y >= self.screen_size.y * 0.61:
+					# 	self.screen[y][x] = floor
+			# else:
+				# for y in range(self.screen_size.y):
+				# 	self.screen[y][x] = gradient[-1]
+				# 	# if y >= self.screen_size.y * 0.61:
+				# 	# 	self.screen[y][x] = floor
 
 	def displace(self, direction):
 		move = Segment(self.pos, self.pos + direction)
 		intersection = False
 		for object_ in self.objects:
-			if object_.intersects(move):
+			if object_.segment.intersects(move):
 				intersection = True
+				if object_.is_exit:
+					quit()
 		if not intersection:
 			self.pos += direction
 		return not intersection

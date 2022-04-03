@@ -17,6 +17,7 @@ class Main():
 		self.fill_map_stage0()
 		self.pointer_pos = 0
 		self.done = False
+		self.prev_frame_time = time.time()
 
 	def print_map(self):
 		screen.gotoXY(1, 1)
@@ -114,6 +115,10 @@ class Main():
 		if self.stage == 2:
 			self.game_runner.update()
 
+		elapsed = time.time() - self.prev_frame_time
+		self.prev_frame_time = time.time()
+		print("     FPS:", int(1 / elapsed), " ")
+
 	def on_press(self, key):
 		if key == keyboard.Key.esc:
 			self.done = True
@@ -162,13 +167,13 @@ if __name__ == "__main__":
 	terminal_size = os.get_terminal_size()
 
 	actions = CurrentActions()
-	runner = Main(actions, Vector2(terminal_size[0] - 2, terminal_size[1] - 2))
+	runner = Main(actions, Vector2(terminal_size[0] - 2, terminal_size[1] - 5))
 
 	listener = keyboard.Listener(on_press=runner.on_press, on_release=runner.on_release)
 	listener.start()
 
 	while True:	
 		runner.update(listener)
-		time.sleep(0.03)
+		# time.sleep(0.01)
 
 listener.join()  
