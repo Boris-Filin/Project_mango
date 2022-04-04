@@ -4,44 +4,67 @@ from colorconsole import terminal
 from Camera import Camera
 from Loader import Loader
 from Vector2 import Vector2
-from pynput import keyboard
-
+from WinScreen import WinScreen
 
 class Runner():
-	def __init__(self, screen, actions, map_name, size=Vector2(200, 55)):
-		loaded_map = Loader(map_name, screen)
+	def __init__(self, screen, actions, loaded_map, map_name, size=Vector2(200, 55), is_maze=False):
+		# loaded_map = Loader(map_name)
 		objects = loaded_map.objects
+		self.map_name = map_name
 		self.initial_pos = loaded_map.player_pos
 		self.initial_rotation = loaded_map.player_rotation
-		self.done = False
+		self.escaped = False
 
 		# screen.set_color(15, 0)
-		self.camera = Camera(self.initial_pos, self.initial_rotation, size)
+		self.camera = Camera(self, self.initial_pos, self.initial_rotation, size)
 		self.camera.update_objects(objects)
 		self.camera.update()
 		self.map_ = self.camera.send_screen()
 
 		self.actions = actions
 		self.screen = screen
+		self.size = size
 
 		self.player_speed = 2
 		self.player_rotation_speed = 90
 
 		self.elapsed_time = 0
 		self.last_time = time.time()
+		self.start_time = time.time()
+
+		self.loaded_map = loaded_map
+		self.is_maze = is_maze
+		if is_maze:
+			self.visual_map = str(loaded_map).split("\n")
+			self.maze_size = Vector2(loaded_map.w, loaded_map.h)
+			self.map_name += " maze"
+
 
 	def print_map(self):
 		self.screen.gotoXY(1, 1)
 		print()
+		if self.is_maze:
+			self.loaded_map.update_player_pos(self.camera.pos)
+			self.visual_map = str(self.loaded_map).split("\n")
 		for y in range(len(self.map_)):
-			print("".join(self.map_[y]))
-			# pass
+			strip = "".join(self.map_[y])
+			if self.is_maze and y <= self.maze_size.y:
+				strip = "   " + self.visual_map[y] + strip[self.maze_size.x * 2 + 5:]
+			print(strip)
+
+		print("     FPS:", int(1 / self.elapsed_time), " ")
+
+		# if self.visual_map != None:
+		# 	self.loaded_map.update_player_pos(self.camera.pos)
+		# 	self.visual_map = str(self.loaded_map)
+		# 	self.screen.gotoXY(0, 1)
+		# 	print(self.visual_map)
 
 	def update(self):
 		self.elapsed_time = time.time() - self.last_time
-		self.last_time = time.time()
+		self.last_time = time.time()		
 
-		if self.done:
+		if self.actions.has("quit"):
 			self.screen.clear()
 			self.screen.gotoXY(1, 1)
 			quit()
@@ -49,39 +72,13 @@ class Runner():
 		self.player_movement()
 
 		self.camera.update()
-		self.map_ = self.camera.send_screen()
+
+		if self.escaped:
+			return WinScreen(self.screen, self.actions, self.map_name, time.time() - self.start_time, self.size)
+
 		self.print_map()
 
-	def on_press(self, key):
-		if key == keyboard.Key.esc:
-			self.done = True
-			return False
-		try:
-			keychar = key.char
-			if keychar == "a":
-				self.actions.add("left")
-			if keychar == "s":
-				self.actions.add("back")
-			if keychar == "w":
-				self.actions.add("forward")
-			if keychar == "d":
-				self.actions.add("right")
-		except:
-			pass
-
-	def on_release(self, key):
-		try:
-			keychar = key.char
-			if keychar == "a":
-				self.actions.remove("left")
-			if keychar == "s":
-				self.actions.remove("back")
-			if keychar == "w":
-				self.actions.remove("forward")
-			if keychar == "d":
-				self.actions.remove("right")
-		except:
-			pass
+		return self
 
 	def player_movement(self):
 		if self.actions.has("left"):
@@ -94,3 +91,6 @@ class Runner():
 			self.camera.move(-self.player_speed * self.elapsed_time)
 		if self.actions.has("forward"):
 			self.camera.move(self.player_speed * self.elapsed_time)
+
+	def escape(self):
+		self.escaped = True

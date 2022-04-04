@@ -1,19 +1,47 @@
-import re
-def handle_tags(line):
-	tags_text = re.search(r"\{.*\}", line)
-	if tags_text == None:
-		return None
+from Runner import Runner
+from colorconsole import terminal
+from Loader import Loader
+import os
+from Main import CurrentActions
+from Vector2 import Vector2
+from pynput import keyboard
 
-	tags = {}
-	tags_strings = re.sub("\{|\}", "", tags_text.group(0)).split(",")
-	for tag_string in tags_strings:
-		tag = tag_string.strip()
-		if not ":" in tag:
-			continue
-		key = tag[:tag.find(":")]
-		val = tag[tag.find(":") + 1:]
-		tags[key] = val
 
-	return tags
+if __name__ == "__main__":
+	screen = terminal.get_terminal()
+	screen.clear()
+	terminal_size = os.get_terminal_size()
 
-print(handle_tags("s 1 1 0 0 {slab:True, fill:#}"))
+	levels = os.listdir("Custom_Maps")
+	loaded_map = Loader(levels[0], screen)
+
+	actions = CurrentActions()
+	runner = Runner(screen, actions, loaded_map, Vector2(terminal_size[0] - 2, terminal_size[1] - 5))
+
+	listener = keyboard.Listener(on_press=runner.on_press, on_release=runner.on_release)
+	listener.start()
+
+	while True:	
+		runner.update()
+		# time.sleep(0.01)
+
+	listener.join()
+
+
+# class C1():
+# 	def __init__(self, **kwargs):
+# 		self.m(**kwargs)
+
+# 	def m(self, x, y, answ):
+# 		# print(kwargs.get("answ"))
+# 		print(answ)
+# 		# for a in args:
+# 		# 	print(a)
+# 		# print(x)
+
+
+
+# c = C1(x=1, y=2, answ=42)
+
+
+# print(handle_tags("s 1 1 0 0 {slab:True, fill:#}"))

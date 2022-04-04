@@ -4,21 +4,23 @@ from Segment import Segment
 
 
 class Camera():
-	def __init__(self, pos=Vector2(), rotation=0,
+	def __init__(self, runner, pos=Vector2(), rotation=0,
 		screen_size=Vector2(200, 55), fov=Vector2(120, 80), **kwargs):
-			self.pos = pos.cast()
-			self.rotation = rotation
-			self.fov = fov
-			self.screen_size = screen_size.cast()
-			self.screen = []
-			self.objects = []
-			self.initialize_screen()
-			self.update()
-			self.player_height = 1.5 if not "player_height" in kwargs else kwargs["player_height"]
-			self.wall_height = 2.5 if  not "wall_height" in kwargs else kwargs["wall_height"]
 
-			self.du0 = (self.wall_height - self.player_height) / math.tan(math.radians(self.fov.y / 2))
-			self.dd0 = self.player_height / math.tan(math.radians(self.fov.y / 2))
+		self.runner = runner
+		self.pos = pos.cast()
+		self.rotation = rotation
+		self.fov = fov
+		self.screen_size = screen_size.cast()
+		self.screen = []
+		self.objects = []
+		self.initialize_screen()
+		self.update()
+		self.player_height = 1.5 if not "player_height" in kwargs else kwargs["player_height"]
+		self.wall_height = 2.5 if  not "wall_height" in kwargs else kwargs["wall_height"]
+
+		self.du0 = (self.wall_height - self.player_height) / math.tan(math.radians(self.fov.y / 2))
+		self.dd0 = self.player_height / math.tan(math.radians(self.fov.y / 2))
 
 	def initialize_screen(self):
 		for y in range(self.screen_size.y):
@@ -65,9 +67,13 @@ class Camera():
 					# 	self.screen[y][x] = floor
 				continue
 
+			if dist != 0:
+				pix_u = int(self.screen_size.y * self.du0 / dist)
+				pix_d = int(self.screen_size.y * self.dd0 / dist)
+			else:
+				pix_u = self.screen_size.y * self.du0
+				pix_d = self.screen_size.y * self.dd0
 
-			pix_u = int(self.screen_size.y * self.du0 / dist)
-			pix_d = int(self.screen_size.y * self.dd0 / dist)
 
 			fac = math.floor(dist / render_distance * (len(gradient) - 1))
 			
@@ -108,7 +114,7 @@ class Camera():
 			if object_.segment.intersects(move):
 				intersection = True
 				if object_.is_exit:
-					quit()
+					self.runner.escape()
 		if not intersection:
 			self.pos += direction
 		return not intersection

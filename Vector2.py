@@ -68,6 +68,18 @@ class Vector2:
 		self.y /= val
 		return self
 
+	def __floordiv__(self, val):
+		if val == 0:
+			raise ZeroDivisionError
+		return Vector2(self.x // val, self.y // val)
+
+	def __ifloordiv__(self, val):
+		if val == 0:
+			raise ZeroDivisionError
+		self.x //= val
+		self.y //= val
+		return self
+
 	def __str__(self):
 		return "Vector2: x = {}, y = {}".format(self.x, self.y)
 

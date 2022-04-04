@@ -74,8 +74,6 @@ class BgColour():
 	BrightCyan = "\u001b[46;1m"
 	BrightWhite = "\u001b[47;1m"
 
-	Clear = "\u001b[0m"
-
 	colour_names = {
 		"black": Black,
 		"red": Red,
@@ -94,6 +92,4 @@ class BgColour():
 		"bright_magenta": BrightMagenta,
 		"bright_cyan": BrightCyan,
 		"bright_white": BrightWhite,
-
-		"clear": Clear
 	}

@@ -13,6 +13,8 @@ class Loader():
 
 		self.screen = screen
 
+		self.visual_map = None
+
 	def load_file(self, file_name):
 		try:
 			with open("Custom_Maps/" + file_name, "r") as file:

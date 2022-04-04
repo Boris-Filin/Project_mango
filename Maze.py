@@ -6,7 +6,7 @@ from Segment import Segment
 from Wall import Wall
 
 class Maze():
-	def __init__(self, w = 6, h = 6, cell_size = 1.5):
+	def __init__(self, w = 6, h = 6, cell_size = 2):
 		self.map_ = []
 		self.w = w
 		self.h = h
@@ -15,16 +15,20 @@ class Maze():
 		self.chamber_queue = []
 		self.lines = []
 		self.cells = []
-		self.walls = []
+		self.objects = []
 		self.player_pos = Vector2()
+		self.player_rotation = random.random() * 360
 		self.exit_pos = 0
 		self.exit_wall = 0
-
-		self.generate()
 
 		self.walls_colour = "magenta"
 		self.exit_colour = "red"
 		self.player_colour = "red"
+
+		self.generate()
+		self.convert_to_walls()
+		self.visual_map = str(self)
+
 				
 	def generate(self):
 		self.lines.append(Rect(Vector2(0, 0), Vector2(self.w, 0)))
@@ -41,13 +45,17 @@ class Maze():
 
 	def get_walls(self):
 		self.convert_to_walls()
-		return self.walls
+		return self.objects
 
 	def convert_to_walls(self):
-		for line in self.lines:
-			segment = Segment(line.a, line.b)
-			wall = Wall(segment)
-			self.walls.append(wall)
+		for i in range(len(self.lines)):
+			line = self.lines[i]
+			segment = Segment(line.a * self.cell_size, line.b * self.cell_size)
+			if i < len(self.lines) - 1:
+				wall = Wall(segment)
+			else:
+				wall = Wall(segment, {"fill": ".", "slab": "false", "is_exit": "true"})
+			self.objects.append(wall)
 
 # Wall indicies: North - 0; East - 1; South - 2; West - 3.
 	def put_exit(self):
@@ -59,19 +67,23 @@ class Maze():
 		if self.exit_wall == 0 or self.exit_wall == 2:
 			old_wall = self.lines.pop(self.exit_wall)
 			left_wall = Rect(old_wall.a, Vector2(self.exit_pos, old_wall.a.y))
-			right_wall = Rect(Vector2(self.exit_pos + 1, old_wall.b.x), old_wall.b)
+			right_wall = Rect(Vector2(self.exit_pos + 1, old_wall.b.y), old_wall.b)
+			exit_wall = Rect(Vector2(self.exit_pos, old_wall.a.y), Vector2(self.exit_pos + 1, old_wall.b.y))
 			if right_wall.width != 0:
 				self.lines.insert(self.exit_wall, right_wall)
 			if left_wall.width != 0:
 				self.lines.insert(self.exit_wall, left_wall)
+			self.lines.append(exit_wall)
 		elif self.exit_wall == 1 or self.exit_wall == 3:
 			old_wall = self.lines.pop(self.exit_wall)
 			upper_wall = Rect(old_wall.a, Vector2(old_wall.a.x, self.exit_pos))
 			lower_wall = Rect(Vector2(old_wall.b.x, self.exit_pos + 1), old_wall.b)
+			exit_wall = Rect(Vector2(old_wall.a.x, self.exit_pos), Vector2(old_wall.b.x, self.exit_pos + 1))
 			if upper_wall.height != 0:
 				self.lines.insert(self.exit_wall, upper_wall)
 			if lower_wall.height != 0:
 				self.lines.insert(self.exit_wall, lower_wall)
+			self.lines.append(exit_wall)
 
 	def put_player(self):
 		if self.exit_wall == 0:
@@ -82,6 +94,11 @@ class Maze():
 			self.player_pos = Vector2(random.randint(0, self.w - 1), random.randint(0, self.h // 2))
 		elif self.exit_wall == 3:
 			self.player_pos = Vector2(random.randint(self.w // 2 + 1, self.w - 1), random.randint(0, self.h - 1))
+		self.player_pos += Vector2(0.5, 0.5)
+		self.player_pos *= self.cell_size
+
+	def update_player_pos(self, new_pos):
+		self.player_pos = new_pos // self.cell_size
 
 	def split_chamber(self, chamber):
 		a = chamber.a
@@ -126,7 +143,6 @@ class Maze():
 				self.lines.append(line_1)
 			if line_2.width != 0:
 				self.lines.append(line_2)
-			# self.lines.append(Rect(Vector2(a.x, line_y), Vector2(b.x, line_y)))
 
 	def try_queueing_chamber(self, chamber):
 		if chamber.b.x - chamber.a.x < 2:
@@ -144,22 +160,23 @@ class Maze():
 			for x in range(self.w + 1):
 				self.cells[y].append([False, False])
 
-		for line in self.lines:
+		for i in range(len(self.lines) - 1):
+			line = self.lines[i]
 			a = line.a
 			b = line.b
 			vertical = a.x == b.x
 			if vertical:
 				for y in range(b.y - a.y):
-					self.cells[a.y + y][a.x][1] = True
+					self.cells[a.y + y][self.w - (a.x)][1] = True
 			else:
 				for x in range(b.x - a.x):
-					self.cells[a.y][a.x + x][0] = True
+					self.cells[a.y][self.w - (a.x + x) - 1][0] = True
 
 	def __str__(self):
 		res = ""
 		for y in range(self.h + 1):
-			# res += coloured(clear=True) + "\n" + coloured(col = self.walls_colour, clear = False)
-			res += "\n"
+			if y != 0:
+				res += "\n"
 			for x in range(self.w + 1):
 				cell = self.cells[y][x]
 				char = "  "
@@ -179,33 +196,17 @@ class Maze():
 
 				is_coloured = False
 
-				if x == self.player_pos.x and y == self.player_pos.y:
+				if x == self.w - int(self.player_pos.x) - 1 and y == int(self.player_pos.y):
 					if char[1] == "▀":
-						# char = coloured(char[0], col = self.walls_colour) + coloured(
-						# 	char[1], col = self.walls_colour, bg = self.player_colour)
 						char = char[0] + coloured(char[1], bg = self.player_colour)
-						# is_coloured = True
 					else:
 						char = char[0] + coloured("▄", col = self.player_colour)
-						# char = coloured(char[0], col = self.walls_colour) + coloured("▄", col = self.player_colour)
-						# is_coloured = True
-					# char += coloured(col = self.walls_colour, clear = False)
 					char += coloured(clear = True)
-
-				# if not is_coloured:
-				# 	char = coloured(char, col = self.walls_colour)
-
 				res += char
 
 		return res
 
 
-maze = Maze(30, 30)
-print(maze)
-
-walls = maze.get_walls()
-
-print(len(walls))
 
 
 # ▄▀█
