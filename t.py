@@ -1,47 +1,29 @@
-from Runner import Runner
-from colorconsole import terminal
-from Loader import Loader
-import os
-from Main import CurrentActions
-from Vector2 import Vector2
-from pynput import keyboard
+from Vector2 import Vector2 as Vector
 
-
-if __name__ == "__main__":
-	screen = terminal.get_terminal()
-	screen.clear()
-	terminal_size = os.get_terminal_size()
-
-	levels = os.listdir("Custom_Maps")
-	loaded_map = Loader(levels[0], screen)
-
-	actions = CurrentActions()
-	runner = Runner(screen, actions, loaded_map, Vector2(terminal_size[0] - 2, terminal_size[1] - 5))
-
-	listener = keyboard.Listener(on_press=runner.on_press, on_release=runner.on_release)
-	listener.start()
-
-	while True:	
-		runner.update()
-		# time.sleep(0.01)
-
-	listener.join()
-
-
-# class C1():
-# 	def __init__(self, **kwargs):
-# 		self.m(**kwargs)
-
-# 	def m(self, x, y, answ):
-# 		# print(kwargs.get("answ"))
-# 		print(answ)
-# 		# for a in args:
-# 		# 	print(a)
-# 		# print(x)
+a = Vector(4, 2)
+print(a / 2)
 
 
 
-# c = C1(x=1, y=2, answ=42)
+# def __add__(self, vector):
+# def __iadd__(self, vector):
+# def __sub__(self, vector):
+# def __isub__(self, vector):
+# def __mul__(self, val):
+# def __imul__(self, val):
+# def __div__(self, val):
+# def __idiv__(self, val):
+# def __floordiv__(self, val):
+# def __ifloordiv__(self, val):
+# def __str__(self):
+
+# from Vector2 import Vector2 as Vector
 
 
-# print(handle_tags("s 1 1 0 0 {slab:True, fill:#}"))
+# a = Vector(1, 2)
+# b = Vector(-0.5, 3)
+# b *= -2
+# now b is (1, -6)
+# c = a + b
+# c is (1, 2) + (1, -6) = (2, -4)
+

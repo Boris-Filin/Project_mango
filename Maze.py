@@ -31,14 +31,19 @@ class Maze():
 
 				
 	def generate(self):
+		# Initial 4 walls
 		self.lines.append(Rect(Vector2(0, 0), Vector2(self.w, 0)))
 		self.lines.append(Rect(Vector2(self.w, 0), Vector2(self.w, self.h)))
 		self.lines.append(Rect(Vector2(0, self.h), Vector2(self.w, self.h)))
 		self.lines.append(Rect(Vector2(0, 0), Vector2(0, self.h)))
-
+		# Initial chamber (the entire maze)
 		self.chamber_queue.append(Rect(Vector2(), Vector2(self.w, self.h)))
+
+		# The main execution loop
 		while len(self.chamber_queue) > 0:
 			self.split_chamber(self.chamber_queue.pop(0))
+
+		# Final steps - exit and player placement
 		self.put_exit()
 		self.put_player()
 		self.update_cells()
@@ -54,7 +59,7 @@ class Maze():
 			if i < len(self.lines) - 1:
 				wall = Wall(segment)
 			else:
-				wall = Wall(segment, {"fill": ".", "slab": "false", "is_exit": "true"})
+				wall = Wall(segment, {"fill": "E", "slab": "false", "is_exit": "true"})
 			self.objects.append(wall)
 
 # Wall indicies: North - 0; East - 1; South - 2; West - 3.

@@ -8,6 +8,8 @@ class Equation:
 		self.b = b
 		self.c = c
 
+# classmethod is a different type of constructor.
+# It allows for the equation to be derived from two points.
 	@classmethod
 	def from_points(cls, pos_a, pos_b):
 		dx = pos_b.x - pos_a.x
@@ -24,6 +26,7 @@ class Equation:
 			c = (pos_a.y - (dy / dx) * pos_a.x) * dx
 		return cls(a, b, c)
 
+# The previously derived formuli
 	def count_intersection(self, equation):
 		div = (self.a * equation.b - equation.a * self.b)
 		if div == 0:

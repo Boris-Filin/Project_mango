@@ -23,9 +23,6 @@ class Vector2:
 	def dot(self, vector):
 		return self.x * vector.x + self.y * vector.y
 
-	def cross2D(self, vector):
-		return self.x * vector.y - self.y * vector.x
-
 	def angle(self, vector):
 		return math.degrees(math.acos(self.dot(vector) / (self.magnitude * vector.magnitude)))
 
@@ -56,12 +53,12 @@ class Vector2:
 		self.y *= val
 		return self
 
-	def __div__(self, val):
+	def __truediv__(self, val):
 		if val == 0:
 			raise ZeroDivisionError
 		return Vector2(self.x / val, self.y / val)
 
-	def __idiv__(self, val):
+	def __itruediv__(self, val):
 		if val == 0:
 			raise ZeroDivisionError
 		self.x /= val
@@ -88,3 +85,4 @@ class Vector2:
 		if not in_rad:
 			ang = math.radians(ang)
 		return Vector2(r * math.cos(ang), r * math.sin(ang))
+

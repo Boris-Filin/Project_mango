@@ -1,4 +1,5 @@
 import time
+import os
 
 
 class Stage():
@@ -13,12 +14,17 @@ class Stage():
 				self.map_[y].append(" ")
 
 	def print_map(self):
-		self.screen.gotoXY(1, 1)
+		print("\033[0;0H")
 		for y in range(self.size.y):
 			print()
 			for x in range(self.size.x):
 				print(self.map_[y][x], end='')
 		print()
+
+	def clear_screen(self):
+		print("\033[0;0H")
+		x, y = os.get_terminal_size()
+		print((" " * x + "\n") * y)
 
 	def put_string(self, s, pos, centered=False):
 		for i in range(len(s)):
@@ -35,8 +41,8 @@ class Stage():
 		self.prev_frame_time = time.time()
 
 		if self.actions.has("quit"):
-			self.screen.clear()
-			self.screen.gotoXY(1, 1)
+			self.clear_screen()
+			print("\033[0;0H")
 			quit()
 
 		next_stage = self.stage_update()

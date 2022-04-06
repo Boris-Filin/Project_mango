@@ -14,9 +14,7 @@ class CurrentActions():
 			self.actions.remove(action)
 
 	def has(self, action):
-		if action in self.actions:
-			return True
-		return False
+		return action in self.actions
 
 	def leave_only(self, action):
 		self.actions = [action]
@@ -51,6 +49,8 @@ class CurrentActions():
 			pass
 
 	def on_release(self, key):
+		if key == keyboard.Key.esc:
+			self.remove("quit")
 		if key == keyboard.Key.space:
 			self.remove("continue")
 		if key == keyboard.Key.up:

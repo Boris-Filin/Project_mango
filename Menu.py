@@ -105,3 +105,4 @@ class Menu(Stage):
 			game_runner = Runner(self.screen, self.actions, loaded_map, map_name, self.size, is_maze)
 			self.screen.clear()
 			return game_runner
+

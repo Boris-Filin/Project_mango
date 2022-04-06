@@ -9,7 +9,6 @@ class Segment():
 		self.pos_b = pos_b
 		self.normal = (pos_a - pos_b).normal
 		self.equation = Equation.from_points(pos_a, pos_b)
-		self.direction = pos_a - pos_b
 
 	def intersects(self, segment):
 		if self.normal.dot(segment.pos_a - self.pos_a) * self.normal.dot(segment.pos_b - self.pos_a) > 0:
