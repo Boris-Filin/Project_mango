@@ -7,9 +7,7 @@ from TitleArt import art1
 
 
 class WinScreen(Stage):
-	def __init__(self, screen, actions, map_name, final_time=0, size=Vector2(200, 55)):
-		# screen.set_color(15, 0)
-		self.screen = screen
+	def __init__(self, actions, map_name, final_time=0, size=Vector2(200, 55)):
 		self.actions = actions
 		self.size = size
 		self.map_ = []
@@ -41,6 +39,5 @@ class WinScreen(Stage):
 	def stage_update(self):
 		if self.actions.has("continue"):
 			self.actions.clear()
-			# return Menu(self.screen, self.actions, self.size)
 
 

@@ -1,5 +1,6 @@
 import random
 import time
+import os
 from colorconsole import terminal
 from Camera import Camera
 from Loader import Loader
@@ -7,7 +8,7 @@ from Vector2 import Vector2
 from WinScreen import WinScreen
 
 class Runner():
-	def __init__(self, screen, actions, loaded_map, map_name, size=Vector2(200, 55), is_maze=False):
+	def __init__(self, actions, loaded_map, map_name, size=Vector2(200, 55), is_maze=False):
 		objects = loaded_map.objects
 		self.map_name = map_name
 		self.initial_pos = loaded_map.player_pos
@@ -20,7 +21,6 @@ class Runner():
 		self.map_ = self.camera.send_screen()
 
 		self.actions = actions
-		self.screen = screen
 		self.size = size
 
 		self.player_speed = 2
@@ -37,10 +37,13 @@ class Runner():
 			self.maze_size = Vector2(loaded_map.w, loaded_map.h)
 			self.map_name += " maze"
 
+		self.fps_20_counter = 0
+		self.last_measurement_time = time.time()
+
 
 	def print_map(self):
 		# Go to upper left corner
-		print("\033[1;1H")
+		print("\033[0;0H")
 		print()
 
 		# Minimap rendering
@@ -56,8 +59,21 @@ class Runner():
 			print(strip)
 
 		# Output FPS count for debugging purposes
-		print("     FPS:", int(1 / self.elapsed_time), " ")
+		self.fps_20_counter += 1
+		if self.fps_20_counter >= 20:
+			self.fps_20_counter = 0
+			time_taken = time.time() - self.last_measurement_time
+			self.last_measurement_time = time.time()
+			fps = 20 / time_taken
+			print("     FPS:", int(fps), " ")
 
+		# print("     FPS:", int(1 / self.elapsed_time), " ")
+
+	def clear_screen(self):
+		print("\033[0;0H")
+		x, y = os.get_terminal_size()
+		print((" " * x + "\n") * y)
+		print("\033[0;0H")
 
 	def update(self):
 		# Calculate the time since the last frame
@@ -66,8 +82,7 @@ class Runner():
 
 		# Check if ESCAPE was pressed
 		if self.actions.has("quit"):
-			self.screen.clear()
-			self.screen.gotoXY(1, 1)
+			self.clear_screen()
 			quit()
 
 		# Move player
@@ -75,8 +90,8 @@ class Runner():
 
 		# Check if the maze was completed		
 		if self.escaped:
-			return WinScreen(self.screen, self.actions,
-				self.map_name, time.time() - self.start_time, self.size)
+			return WinScreen(self.actions, self.map_name,
+				time.time() - self.start_time, self.size)
 
 		# RENDER THE IMAGE
 		self.camera.update()

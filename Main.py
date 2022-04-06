@@ -11,13 +11,11 @@ from WinScreen import WinScreen
 
 
 if __name__ == "__main__":
-	screen = terminal.get_terminal()
-	screen.clear()
 	os.system("")
 	x, y = os.get_terminal_size()
 
 	actions = CurrentActions()
-	runner = Title(screen, actions, Vector2(x - 1, y - 4))
+	runner = Title(actions, Vector2(x - 1, y - 4))
 
 	listener = keyboard.Listener(on_press=actions.on_press, on_release=actions.on_release)
 	listener.start()

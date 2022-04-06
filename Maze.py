@@ -18,6 +18,7 @@ class Maze():
 		self.objects = []
 		self.player_pos = Vector2()
 		self.player_rotation = random.random() * 360
+		self.player_real_pos = Vector2()
 		self.exit_pos = 0
 		self.exit_wall = 0
 
@@ -92,18 +93,19 @@ class Maze():
 
 	def put_player(self):
 		if self.exit_wall == 0:
-			self.player_pos = Vector2(random.randint(0, self.w - 1), random.randint(self.h // 2 + 1, self.h - 1))
+			self.player_real_pos = Vector2(random.randint(0, self.w - 1), random.randint(self.h // 2 + 1, self.h - 1))
 		elif self.exit_wall == 1:
-			self.player_pos = Vector2(random.randint(0, self.w // 2), random.randint(0, self.h - 1))
+			self.player_real_pos = Vector2(random.randint(0, self.w // 2), random.randint(0, self.h - 1))
 		elif self.exit_wall == 2:
-			self.player_pos = Vector2(random.randint(0, self.w - 1), random.randint(0, self.h // 2))
+			self.player_real_pos = Vector2(random.randint(0, self.w - 1), random.randint(0, self.h // 2))
 		elif self.exit_wall == 3:
-			self.player_pos = Vector2(random.randint(self.w // 2 + 1, self.w - 1), random.randint(0, self.h - 1))
-		self.player_pos += Vector2(0.5, 0.5)
-		self.player_pos *= self.cell_size
+			self.player_real_pos = Vector2(random.randint(self.w // 2 + 1, self.w - 1), random.randint(0, self.h - 1))
+
+		self.player_pos = self.player_real_pos * self.cell_size + Vector2(0.5, 0.5)
 
 	def update_player_pos(self, new_pos):
-		self.player_pos = new_pos // self.cell_size
+		self.player_pos = new_pos
+		self.player_real_pos = new_pos // self.cell_size
 
 	def split_chamber(self, chamber):
 		a = chamber.a
@@ -201,7 +203,7 @@ class Maze():
 
 				is_coloured = False
 
-				if x == self.w - int(self.player_pos.x) - 1 and y == int(self.player_pos.y):
+				if x == self.w - int(self.player_real_pos.x) - 1 and y == int(self.player_real_pos.y):
 					if char[1] == "▀":
 						char = char[0] + coloured(char[1], bg = self.player_colour)
 					else:

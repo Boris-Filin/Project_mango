@@ -25,6 +25,7 @@ class Stage():
 		print("\033[0;0H")
 		x, y = os.get_terminal_size()
 		print((" " * x + "\n") * y)
+		print("\033[0;0H")
 
 	def put_string(self, s, pos, centered=False):
 		for i in range(len(s)):
@@ -42,7 +43,6 @@ class Stage():
 
 		if self.actions.has("quit"):
 			self.clear_screen()
-			print("\033[0;0H")
 			quit()
 
 		next_stage = self.stage_update()

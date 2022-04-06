@@ -6,14 +6,11 @@ from TitleArt import art1
 
 
 class Title(Stage):
-	def __init__(self, screen, actions, size=Vector2(200, 55)):
-		# screen.set_color(15, 0)
-		self.screen = screen
+	def __init__(self, actions, size=Vector2(200, 55)):
 		self.actions = actions
 		self.size = size
 		self.map_ = []
 		self.prime_map()
-		# self.fill_map()
 		self.art_slices = art1.split("\n")
 		self.art_slices = list(filter(lambda s: s != "", self.art_slices))
 
@@ -38,6 +35,6 @@ class Title(Stage):
 	def stage_update(self):
 		if self.actions.has("continue"):
 			self.actions.clear()
-			return Menu(self.screen, self.actions, self.size)
+			return Menu(self.actions, self.size)
 
 

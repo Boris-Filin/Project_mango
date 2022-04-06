@@ -7,8 +7,7 @@ from Stage import Stage
 from Loader import Loader
 
 class Menu(Stage):
-	def __init__(self, screen, actions, size=Vector2(200, 55)):
-		self.screen = screen
+	def __init__(self, actions, size=Vector2(200, 55)):
 		self.actions = actions
 		self.size = size
 
@@ -85,7 +84,7 @@ class Menu(Stage):
 		if self.actions.has("continue"):
 			self.actions.clear()
 			if self.menu_type == "user_levels":
-				loaded_map = Loader(self.levels[self.pointer_pos], self.screen)
+				loaded_map = Loader(self.levels[self.pointer_pos])
 				map_name = self.levels[self.pointer_pos].replace(".txt", "")
 				is_maze = False
 			elif self.menu_type == "random_levels":
@@ -102,7 +101,7 @@ class Menu(Stage):
 					loaded_map = Maze(8, 6)
 					map_name = "Glitched"
 				is_maze = True
-			game_runner = Runner(self.screen, self.actions, loaded_map, map_name, self.size, is_maze)
-			self.screen.clear()
+			game_runner = Runner(self.actions, loaded_map, map_name, self.size, is_maze)
+			self.clear_screen()
 			return game_runner
 

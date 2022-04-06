@@ -4,14 +4,12 @@ from Segment import Segment
 from Wall import Wall
 
 class Loader():
-	def __init__(self, file_name, screen):
+	def __init__(self, file_name):
 		self.lines = self.load_file(file_name)
 		self.objects = []
 		self.player_pos = Vector2()
 		self.player_rotation = 0
 		self.decode_lines()
-
-		self.screen = screen
 
 		self.visual_map = None
 
