@@ -87,23 +87,18 @@ class Camera():
 
 		for i in range(len(self.objects)):
 			segment = self.objects[i].segment
-			eq = segment.equation
 			point_a = self.transform_point(segment.pos_a, cos_a, sin_a)
 			point_b = self.transform_point(segment.pos_b, cos_a, sin_a)
 
-			eq = Equation.from_points(point_a, point_b)
-			
 			depth_a = point_a.y
 			depth_b = point_b.y
 
 			if depth_a > self.render_distance and depth_b > self.render_distance or depth_a < 0 and depth_b < 0:
 				continue
 
-			fov_at_distance_a = depth_a * fov_tan
-			fov_at_distance_b = depth_b * fov_tan
-
 			if point_a == Vector2() or point_b == Vector2():
 				continue
+
 
 			left = Vector2(self.gradient_buffer[0], 1)
 			right = Vector2(self.gradient_buffer[-1], 1)
@@ -115,18 +110,25 @@ class Camera():
 			b_NW = right.cross(point_b) > 0
 			is_b_inside = b_NE and b_NW
 
+			if not (a_NE or b_NE) or not (a_NW or b_NW):
+				continue
+
+			width_at_a = depth_a * fov_tan
+			width_at_b = depth_b * fov_tan
+
+			eq = Equation.from_points(point_a, point_b)
 
 			# When both are inside (render normally)
 			if is_a_inside and is_b_inside:
-				column_a = int((point_a.x + fov_at_distance_a) * self.screen_size.x / (2 * fov_at_distance_a))
-				column_b = int((point_b.x + fov_at_distance_b) * self.screen_size.x / (2 * fov_at_distance_b))
+				column_a = int((point_a.x + width_at_a) * self.screen_size.x / (2 * width_at_a))
+				column_b = int((point_b.x + width_at_b) * self.screen_size.x / (2 * width_at_b))
 			# When ONLY A is outside
 			elif is_b_inside:
 				column_a = self.handle_point_outside_fov(eq, a_NE, a_NW)
-				column_b = int((point_b.x + fov_at_distance_b) * self.screen_size.x / (2 * fov_at_distance_b))
+				column_b = int((point_b.x + width_at_b) * self.screen_size.x / (2 * width_at_b))
 			# When ONLY B is outside
 			elif is_a_inside:
-				column_a = int((point_a.x + fov_at_distance_a) * self.screen_size.x / (2 * fov_at_distance_a))
+				column_a = int((point_a.x + width_at_a) * self.screen_size.x / (2 * width_at_a))
 				column_b = self.handle_point_outside_fov(eq, b_NE, b_NW)
 			# When neither are in sight
 			else:
