@@ -35,8 +35,10 @@ class CurrentActions():
 			self.add("arrow_left")
 		if key == keyboard.Key.right:
 			self.add("arrow_right")
+		if key == keyboard.Key.shift:
+			self.add("sprint")
 		try:
-			keychar = key.char
+			keychar = key.char.lower()
 			if keychar == "a":
 				self.add("left")
 			if keychar == "s":
@@ -45,6 +47,8 @@ class CurrentActions():
 				self.add("forward")
 			if keychar == "d":
 				self.add("right")
+			if keychar == "m":
+				self.add("toggle_map")
 		except:
 			pass
 
@@ -61,8 +65,10 @@ class CurrentActions():
 			self.remove("arrow_left")
 		if key == keyboard.Key.right:
 			self.remove("arrow_right")
+		if key == keyboard.Key.shift:
+			self.remove("sprint")
 		try:
-			keychar = key.char
+			keychar = key.char.lower()
 			if keychar == "a":
 				self.remove("left")
 			if keychar == "s":
@@ -71,5 +77,7 @@ class CurrentActions():
 				self.remove("forward")
 			if keychar == "d":
 				self.remove("right")
+			if keychar == "m":
+				self.remove("toggle_map")
 		except:
 			pass

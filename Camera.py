@@ -5,7 +5,7 @@ from Equation import Equation
 
 class Camera():
 	def __init__(self, runner, pos=Vector2(), rotation=0,
-		screen_size=Vector2(200, 55), fov=Vector2(120, 80), **kwargs):
+		screen_size=Vector2(200, 55), fov=Vector2(90, 80), **kwargs):
 
 		self.runner = runner
 		self.pos = pos.cast()
@@ -25,14 +25,17 @@ class Camera():
 		self.player_height = 1.5 if not "player_height" in kwargs else kwargs["player_height"]
 		self.wall_height = 2.5 if  not "wall_height" in kwargs else kwargs["wall_height"]
 
-		self.gradient = "█" * 2 + "▓" * 3 + "▒" * 3 + "░" * 3 +" "
-		self.render_distance = 8
+		self.camera_height = self.player_height
+		self.is_moving = False
+		self.oscillation_amplitude = 0.1
+		self.oscillation_offset = 0
+		self.oscillation_speed = 4
 
-		self.du0 = (self.wall_height - self.player_height) / math.tan(math.radians(self.fov.y / 2))
-		self.dd0 = self.player_height / math.tan(math.radians(self.fov.y / 2))
+		self.gradient = "█" * 2 + "▓" * 3 + "▒" * 3 + "░" * 3 +" "
+		self.render_distance = 10
 
 		self.initialize_screen()
-		self.update()
+		# self.update()
 
 	def initialize_screen(self):
 		for y in range(self.screen_size.y):
@@ -59,10 +62,17 @@ class Camera():
 	def update_objects(self, objects):
 		self.objects = objects
 			
-	def update(self):
+	def update(self, elapsed_time):
+		if self.oscillation_offset != 0 and not self.is_moving:
+			tmp = self.oscillation_offset // math.pi
+			self.oscillation_offset += self.oscillation_speed * elapsed_time
+			if self.oscillation_offset // math.pi > tmp:
+				self.oscillation_offset = 0
+
 		self.vert()
 		self.frag()
 
+		self.is_moving = False
 
 	def vert(self):
 		alpha = math.radians(self.rotation - 90)
@@ -173,6 +183,12 @@ class Camera():
 		return 0
 
 	def frag(self):
+		self.oscillation_offset %= math.tau
+		self.camera_height = self.player_height + math.sin(self.oscillation_offset) * self.oscillation_amplitude
+
+		du0 = (self.wall_height - self.camera_height) / math.tan(math.radians(self.fov.y / 2))
+		dd0 = self.camera_height / math.tan(math.radians(self.fov.y / 2))
+
 		for x in range(self.screen_size.x):
 			depth = self.depth_buffer[x]
 
@@ -182,8 +198,8 @@ class Camera():
 				continue
 
 			# Calculate the upper and lower proportion of the screen to be filled
-			pix_u = int(self.screen_size.y * self.du0 / depth)
-			pix_d = int(self.screen_size.y * self.dd0 / depth)
+			pix_u = int(self.screen_size.y * du0 / depth)
+			pix_d = int(self.screen_size.y * dd0 / depth)
 
 			# Calculate which colour from the gradient to use
 			fac = math.floor(depth / self.render_distance * (len(self.gradient) - 1))
@@ -233,6 +249,8 @@ class Camera():
 					self.runner.escape()
 		if not intersection:
 			self.pos += direction
+			self.oscillation_offset += direction.magnitude * self.oscillation_speed
+			self.is_moving = True
 		return not intersection
 
 	def move(self, magnitude, precision=5):

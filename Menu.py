@@ -30,6 +30,8 @@ class Menu(Stage):
 			self.levels.append("Easy")
 			self.levels.append("Normal")
 			self.levels.append("Hard")
+			self.levels.append("Nightmare")
+			self.levels.append("Impossible")
 
 	def fill_map(self):
 		for y in range(self.size.y):
@@ -97,6 +99,12 @@ class Menu(Stage):
 				elif self.levels[self.pointer_pos] == "Hard":
 					loaded_map = Maze(10, 15)
 					map_name = "Hard"
+				elif self.levels[self.pointer_pos] == "Nightmare":
+					loaded_map = Maze(30, 30)
+					map_name = "Nightmare"
+				elif self.levels[self.pointer_pos] == "Impossible":
+					loaded_map = Maze(50, 50)
+					map_name = "Impossible"
 				else:
 					loaded_map = Maze(8, 6)
 					map_name = "Glitched"

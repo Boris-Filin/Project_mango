@@ -17,13 +17,15 @@ class Runner():
 
 		self.camera = Camera(self, self.initial_pos, self.initial_rotation, size)
 		self.camera.update_objects(objects)
-		self.camera.update()
+		# self.camera.update()
 		self.map_ = self.camera.send_screen()
 
 		self.actions = actions
 		self.size = size
 
-		self.player_speed = 2
+		self.walk_speed = 2
+		self.sprint_speed = 5
+		self.player_speed = self.walk_speed
 		self.player_rotation_speed = 90
 
 		self.elapsed_time = 0
@@ -32,14 +34,14 @@ class Runner():
 
 		self.loaded_map = loaded_map
 		self.is_maze = is_maze
+		self.map_on = True
 		if is_maze:
 			self.visual_map = str(loaded_map).split("\n")
 			self.maze_size = Vector2(loaded_map.w, loaded_map.h)
 			self.map_name += " maze"
 
-		self.fps_20_counter = 0
+		self.fps_counter = 0
 		self.last_measurement_time = time.time()
-
 
 	def print_map(self):
 		# Go to upper left corner
@@ -54,17 +56,18 @@ class Runner():
 		# Output the horizontal line
 		for y in range(len(self.map_)):
 			strip = "".join(self.map_[y])
-			if self.is_maze and y <= self.maze_size.y:
+			if self.is_maze and y <= self.maze_size.y and self.map_on:
 				strip = "   " + self.visual_map[y] + strip[self.maze_size.x * 2 + 5:]
 			print(strip)
 
 		# Output FPS count for debugging purposes
-		self.fps_20_counter += 1
-		if self.fps_20_counter >= 20:
-			self.fps_20_counter = 0
+		fps_sample = 20
+		self.fps_counter += 1
+		if self.fps_counter >= fps_sample:
+			self.fps_counter = 0
 			time_taken = time.time() - self.last_measurement_time
 			self.last_measurement_time = time.time()
-			fps = 20 / time_taken
+			fps = fps_sample / time_taken
 			print("     FPS:", int(fps), " ")
 
 		# print("     FPS:", int(1 / self.elapsed_time), " ")
@@ -94,7 +97,7 @@ class Runner():
 				time.time() - self.start_time, self.size)
 
 		# RENDER THE IMAGE
-		self.camera.update()
+		self.camera.update(self.elapsed_time)
 
 		# output the rendered image
 		self.print_map()
@@ -102,6 +105,11 @@ class Runner():
 		return self
 
 	def player_movement(self):
+		if self.actions.has("sprint"):
+			self.player_speed = self.sprint_speed
+		else:
+			self.player_speed = self.walk_speed
+
 		if self.actions.has("left"):
 			self.camera.rotation += self.player_rotation_speed * self.elapsed_time
 			self.camera.rotation %= 360
@@ -112,6 +120,10 @@ class Runner():
 			self.camera.move(-self.player_speed * self.elapsed_time)
 		if self.actions.has("forward"):
 			self.camera.move(self.player_speed * self.elapsed_time)
+
+		if self.actions.has("toggle_map"):
+			self.map_on = not self.map_on
+			self.actions.remove("toggle_map")
 
 	def escape(self):
 		self.escaped = True
