@@ -1,7 +1,7 @@
 import math
 from Vector2 import Vector2
 from Segment import Segment
-
+from Equation import Equation
 
 class Camera():
 	def __init__(self, runner, pos=Vector2(), rotation=0,
@@ -11,13 +11,22 @@ class Camera():
 		self.pos = pos.cast()
 		self.rotation = rotation
 		self.fov = fov
+		self.clamp_fov()
 
 		self.screen_size = screen_size.cast()
 		self.screen = []
 		self.objects = []
 
+		self.depth_buffer = []
+		self.wall_buffer = []
+		self.gradient_buffer = []
+		self.init_gradient_buffer()
+
 		self.player_height = 1.5 if not "player_height" in kwargs else kwargs["player_height"]
 		self.wall_height = 2.5 if  not "wall_height" in kwargs else kwargs["wall_height"]
+
+		self.gradient = "█" * 2 + "▓" * 3 + "▒" * 3 + "░" * 3 +" "
+		self.render_distance = 8
 
 		self.du0 = (self.wall_height - self.player_height) / math.tan(math.radians(self.fov.y / 2))
 		self.dd0 = self.player_height / math.tan(math.radians(self.fov.y / 2))
@@ -30,7 +39,20 @@ class Camera():
 			self.screen.append([])
 			for x in range(self.screen_size.x):
 				self.screen[y].append(" ")
-				
+
+	def init_gradient_buffer(self):
+		left_border = math.tan(math.radians(self.fov.x / 2))
+		step = 2 * left_border / self.screen_size.x
+		for x in range(self.screen_size.x):
+			x_i = - left_border + step / 2 + step * x
+			self.gradient_buffer.append(x_i)
+
+	def clamp_fov(self):
+		if self.fov.x < 10:
+			self.fov.x = 10
+		if self.fov.x > 170:
+			self.fov.x = 170
+
 	def send_screen(self):
 		return self.screen
 				
@@ -38,63 +60,145 @@ class Camera():
 		self.objects = objects
 			
 	def update(self):
-		# The depth gradient
-		gradient = "█" * 2 + "▓" * 3 + "▒" * 3 + "░" * 3 +" "
-		
-		render_distance = 8
+		self.vert()
+		self.frag()
 
-		iter_ang = self.fov.x / self.screen_size.x
-		
-		for x in range(self.screen_size.x):
-			# Ray angle for every vertical strip on the screen
-			current_angle = self.rotation - iter_ang * x + self.fov.x / 2
-			# Ray calculation
-			direction = Vector2.polar_to_cartesian(render_distance, current_angle)
-			ray = Segment(self.pos, self.pos + direction)
 
-			# Any wall within render distance will overwrite it
-			dist = render_distance + 1
-			# Default no collisions
-			collision = None
+	def vert(self):
+		alpha = math.radians(self.rotation - 90)
+		cos_a = math.cos(alpha)
+		sin_a = math.sin(alpha)
+		tan_a = math.tan(alpha)
 
-			# Checking an intersecction with every wall in the sene
-			for object_ in self.objects:
-				segment = object_.segment
-				# If the ray intersects the wall, using vector calculation
-				if ray.intersects(segment):
-					# Calculate the distance to the wall
-					new_dist = ray.count_intersection(segment) - self.pos
-					# If it is closer than the current closest wall, write new distance
-					if new_dist.magnitude < dist:
-						dist = new_dist.magnitude
-						collision = object_
+		fov_tan = math.tan(math.radians(self.fov.x / 2))
 
-			# If no walls, fill the screen with background colour
-			if collision is None:
-				for y in range(self.screen_size.y):
-					self.screen[y][x] = gradient[-1]
+		self.depth_buffer = [-1 for i in range(self.screen_size.x)]
+		self.wall_buffer = [-1 for i in range(self.screen_size.x)]
+
+		for i in range(len(self.objects)):
+			segment = self.objects[i].segment
+			eq = segment.equation
+			point_a = self.transform_point(segment.pos_a, cos_a, sin_a)
+			point_b = self.transform_point(segment.pos_b, cos_a, sin_a)
+
+			eq = Equation.from_points(point_a, point_b)
+			
+			depth_a = point_a.y
+			depth_b = point_b.y
+
+			if depth_a > self.render_distance and depth_b > self.render_distance or depth_a < 0 and depth_b < 0:
 				continue
 
-			if dist != 0:
-				# Calculate the upper and lower proportion of the screen to be filled
-				pix_u = int(self.screen_size.y * self.du0 / dist)
-				pix_d = int(self.screen_size.y * self.dd0 / dist)
+			fov_at_distance_a = depth_a * fov_tan
+			fov_at_distance_b = depth_b * fov_tan
+
+			if point_a == Vector2() or point_b == Vector2():
+				continue
+
+			left = Vector2(self.gradient_buffer[0], 1)
+			right = Vector2(self.gradient_buffer[-1], 1)
+
+			a_NE = left.cross(point_a) < 0
+			a_NW = right.cross(point_a) > 0
+			is_a_inside = a_NE and a_NW
+			b_NE = left.cross(point_b) < 0
+			b_NW = right.cross(point_b) > 0
+			is_b_inside = b_NE and b_NW
+
+
+			# When both are inside (render normally)
+			if is_a_inside and is_b_inside:
+				column_a = int((point_a.x + fov_at_distance_a) * self.screen_size.x / (2 * fov_at_distance_a))
+				column_b = int((point_b.x + fov_at_distance_b) * self.screen_size.x / (2 * fov_at_distance_b))
+			# When ONLY A is outside
+			elif is_b_inside:
+				column_a = self.handle_point_outside_fov(eq, a_NE, a_NW)
+				column_b = int((point_b.x + fov_at_distance_b) * self.screen_size.x / (2 * fov_at_distance_b))
+			# When ONLY B is outside
+			elif is_a_inside:
+				column_a = int((point_a.x + fov_at_distance_a) * self.screen_size.x / (2 * fov_at_distance_a))
+				column_b = self.handle_point_outside_fov(eq, b_NE, b_NW)
+			# When neither are in sight
 			else:
-				pix_u = self.screen_size.y // 2 + 1
-				pix_d = self.screen_size.y // 2 + 1
+				# Discard the verrtical case (never drawn)
+				if eq.b == 0:
+					continue
+				# if the line passes above the camera
+				if eq.c / eq.b < 0 and point_a.x * point_b.x < 0:
+					column_a = 0
+					column_b = self.screen_size.x - 1
+				# The line is out of sight
+				else:
+					continue
+
+			if column_a == -1 or column_b == -1:
+				continue
+
+			wall_length = abs(column_b - column_a)
+			for j in range(wall_length + 1):
+				column = column_a + int(math.copysign(j, column_b - column_a))
+				if column < 0 or column > self.screen_size.x - 1:
+					continue
+				if wall_length == 0:
+					depth = min(depth_a, depth_b)
+				else:
+					t = j / wall_length
+					div = eq.a * self.gradient_buffer[column] + eq.b
+					if div == 0:
+						depth = -1
+					else:
+						depth = - eq.c / div
+					# depth = depth_a + t * (depth_b - depth_a)
+				if depth <= 0 or depth > self.render_distance:
+					continue
+				if self.depth_buffer[column] == -1 or self.depth_buffer[column] > depth:
+					self.depth_buffer[column] = depth
+					self.wall_buffer[column] = i
+
+	def handle_point_outside_fov(self, eq, ne, nw):
+		# Point below the camera
+		if not (ne or nw):
+			# When the wall passes directly through the camera
+			if eq.c == 0:
+				return -1
+			# To the right of the camera (x-intercept > 0)
+			if eq.c / eq.a < 0:
+				return self.screen_size.x - 1
+			# To the left of the camera (x-intercept < 0)
+			return 0
+		# Point in the right quadrant
+		elif ne:
+			return self.screen_size.x - 1
+		# Point in the left quadrant (the only remaining case)
+		return 0
+
+	def frag(self):
+		for x in range(self.screen_size.x):
+			depth = self.depth_buffer[x]
+
+			if depth == -1:
+				for y in range(self.screen_size.y):
+					self.screen[y][x] = self.gradient[-1]
+				continue
+
+			# Calculate the upper and lower proportion of the screen to be filled
+			pix_u = int(self.screen_size.y * self.du0 / depth)
+			pix_d = int(self.screen_size.y * self.dd0 / depth)
 
 			# Calculate which colour from the gradient to use
-			fac = math.floor(dist / render_distance * (len(gradient) - 1))
+			fac = math.floor(depth / self.render_distance * (len(self.gradient) - 1))
+
+			wall = self.objects[self.wall_buffer[x]]
 			
 			# Filling - one of the tags; almost never used
-			if len(collision.filling) != 1:
-				char_ = gradient[fac]
+			if len(wall.filling) != 1:
+				char_ = self.gradient[fac]
 			else:
-				char_ = collision.filling
+				char_ = wall.filling
 
 			# Slabbing - adding half-pixels ▄ and ▀ to smoothen the walls
-			slabbed_u = pix_u % 2 and collision.slabbable
-			slabbed_d = pix_d % 2 and collision.slabbable
+			slabbed_u = pix_u % 2 and wall.slabbable
+			slabbed_d = pix_d % 2 and wall.slabbable
 
 			# The lowest and highest points on the screen to be filled
 			min_ = max(int(self.screen_size.y / 2) - pix_u // 2 + 1, 0)
@@ -111,7 +215,13 @@ class Camera():
 					self.screen[y][x] = "▀"
 				# Fill the rest with the background colour
 				else:
-					self.screen[y][x] = gradient[-1]
+					self.screen[y][x] = self.gradient[-1]
+
+	def transform_point(self, point, cos_a, sin_a):
+		x = point.x * cos_a + point.y * sin_a - self.pos.x * cos_a - self.pos.y * sin_a
+		y = - point.x * sin_a + point.y * cos_a + self.pos.x * sin_a - self.pos.y * cos_a
+		new_point = Vector2(x, y)
+		return new_point
 
 	def displace(self, direction):
 		move = Segment(self.pos, self.pos + direction)

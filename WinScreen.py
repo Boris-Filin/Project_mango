@@ -3,7 +3,6 @@ from Vector2 import Vector2
 import time
 import math
 from TitleArt import art1
-# from Menu import Menu
 
 
 class WinScreen(Stage):

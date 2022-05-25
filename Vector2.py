@@ -23,11 +23,17 @@ class Vector2:
 	def dot(self, vector):
 		return self.x * vector.x + self.y * vector.y
 
+	def cross(self, vector):
+		return self.x * vector.y - self.y * vector.x
+
 	def angle(self, vector):
 		return math.degrees(math.acos(self.dot(vector) / (self.magnitude * vector.magnitude)))
 
 	def cast(self):
 		return Vector2(self.x, self.y)
+
+	def __eq__(self, vector):
+		return self.x == vector.x and self.y == vector.y
 
 	def __add__(self, vector):
 		return Vector2(self.x + vector.x, self.y + vector.y)

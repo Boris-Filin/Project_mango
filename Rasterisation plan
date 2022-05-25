@@ -1,0 +1,14 @@
+Steps:
+ + Pre-compute sin and cos
+ + Clear depth buffer, clear wall buffer
+ + Iterating over all the walls:
+ - (Later: dot with the normal, discard facing outwards)
+ + Apply transformations to each point
+ + Find the depth and the row for each point
+ + if depth is too far away or below 0, discard.
+ + Iterate between the rows (inclusive)
+ + Interpolate depth
+ + Wherever it's less than the value in buffer:
+ + Overwrite the buufer value and add the wall ID to the walls buffer
+ - After calculating all the walls, iterate over depth buffer columns
+ - Represent each value by vertical strip

@@ -1,6 +1,5 @@
 import random
 import os
-from colorconsole import terminal
 from Vector2 import Vector2
 from pynput import keyboard
 from Loader import Loader
