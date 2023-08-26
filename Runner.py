@@ -68,7 +68,7 @@ class Runner():
 			time_taken = time.time() - self.last_measurement_time
 			self.last_measurement_time = time.time()
 			fps = fps_sample / time_taken
-			print("     FPS:", int(fps), " ")
+			print("     FPS:", int(fps), " | ", len(self.camera.objects), "walls | ", len(self.camera.loaded_objects), "loaded walls   ")
 
 		# print("     FPS:", int(1 / self.elapsed_time), " ")
 

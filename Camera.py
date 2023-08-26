@@ -17,6 +17,11 @@ class Camera():
 		self.screen = []
 		self.objects = []
 
+		self.chunks = {}
+		self.chunk_width = 1
+		self.p_chunk = Vector2()
+		self.loaded_objects = []
+
 		self.depth_buffer = []
 		self.wall_buffer = []
 		self.gradient_buffer = []
@@ -61,7 +66,20 @@ class Camera():
 				
 	def update_objects(self, objects):
 		self.objects = objects
-			
+		self.init_chunks()
+
+	def init_chunks(self):
+		self.chunks = {}
+		self.chunk_width = self.render_distance * math.tan(math.radians(self.fov.x / 2))
+		for i in range(len(self.objects)):
+			wall = self.objects[i]
+			new_chunks = wall.calculate_chunks(self.chunk_width)
+			for chunk in new_chunks:
+				if self.chunks.get(chunk) is None:
+					self.chunks[chunk] = [i]
+				else:
+					self.chunks[chunk].append(i)
+
 	def update(self, elapsed_time):
 		if self.oscillation_offset != 0 and not self.is_moving:
 			tmp = self.oscillation_offset // math.pi
@@ -69,12 +87,43 @@ class Camera():
 			if self.oscillation_offset // math.pi > tmp:
 				self.oscillation_offset = 0
 
-		self.vert()
+
+		self.depth_buffer = [-1 for i in range(self.screen_size.x)]
+		self.wall_buffer = [-1 for i in range(self.screen_size.x)]
+
+		new_p_chunk = self.pos / self.chunk_width
+		if new_p_chunk != self.p_chunk:
+			self.update_nearest_chunks()
+		self.p_chunk = new_p_chunk
+		# for chunk_y in range(math.floor(self.p_chunk.y) - 1, math.floor(self.p_chunk.y) + 2):
+		# 	for chunk_x in range(math.floor(self.p_chunk.x) - 1, math.floor(self.p_chunk.x) + 2):
+		# 		chunk = self.chunks.get((chunk_x, chunk_y))
+		# 		if not chunk is None:
+		# 			self.processs_chunk(chunk)
+		for chunk in self.chunks.values():
+			self.processs_chunk(chunk)
+			
+
 		self.frag()
 
 		self.is_moving = False
 
-	def vert(self):
+	def update_nearest_chunks(self):
+		self.loaded_objects = []
+		for chunk_y in range(math.floor(self.p_chunk.y) - 1, math.floor(self.p_chunk.y) + 2):
+			for chunk_x in range(math.floor(self.p_chunk.x) - 1, math.floor(self.p_chunk.x) + 2):
+				chunk = self.chunks.get((chunk_x, chunk_y))
+				if not chunk is None:
+					for wall in chunk:
+						if not wall in self.loaded_objects:
+							self.loaded_objects.append(wall)
+
+		# for chunk in self.chunks.values():
+		# 	for wall in chunk:
+		# 		if not wall in self.loaded_objects:
+		# 			self.loaded_objects.append(wall)
+
+	def processs_chunk(self, chunk_wall_ids):
 		alpha = math.radians(self.rotation - 90)
 		cos_a = math.cos(alpha)
 		sin_a = math.sin(alpha)
@@ -82,11 +131,11 @@ class Camera():
 
 		fov_tan = math.tan(math.radians(self.fov.x / 2))
 
-		self.depth_buffer = [-1 for i in range(self.screen_size.x)]
-		self.wall_buffer = [-1 for i in range(self.screen_size.x)]
 
-		for i in range(len(self.objects)):
-			segment = self.objects[i].segment
+		for wall_id in chunk_wall_ids:
+			# print(wall_id, chunk_wall_ids)
+			# quit()
+			segment = self.objects[wall_id].segment
 			point_a = self.transform_point(segment.pos_a, cos_a, sin_a)
 			point_b = self.transform_point(segment.pos_b, cos_a, sin_a)
 
@@ -165,7 +214,7 @@ class Camera():
 					continue
 				if self.depth_buffer[column] == -1 or self.depth_buffer[column] > depth:
 					self.depth_buffer[column] = depth
-					self.wall_buffer[column] = i
+					self.wall_buffer[column] = wall_id
 
 	def handle_point_outside_fov(self, eq, ne, nw):
 		# Point below the camera
@@ -244,7 +293,8 @@ class Camera():
 	def displace(self, direction):
 		move = Segment(self.pos, self.pos + direction)
 		intersection = False
-		for object_ in self.objects:
+		for wall_id in self.loaded_objects:
+			object_ = self.objects[wall_id]
 			if object_.segment.intersects(move):
 				intersection = True
 				if object_.is_exit:

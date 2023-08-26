@@ -103,7 +103,7 @@ class Menu(Stage):
 					loaded_map = Maze(30, 30)
 					map_name = "Nightmare"
 				elif self.levels[self.pointer_pos] == "Impossible":
-					loaded_map = Maze(50, 50)
+					loaded_map = Maze(150, 70)
 					map_name = "Impossible"
 				else:
 					loaded_map = Maze(8, 6)

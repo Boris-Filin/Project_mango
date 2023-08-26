@@ -36,5 +36,15 @@ class Equation:
 
 		return Vector2(x, y)
 
+	def get_x(self, y):
+		if self.a == 0:
+			return None
+		return - (self.b * y + self.c) / self.a
+
+	def get_y(self, x):
+		if self.b == 0:
+			return None
+		return - (self.a * x + self.c) / self.b
+
 	def __str__(self):
 		return str(self.a) + "x + " + str(self.b) + "y + " + str(self.c)

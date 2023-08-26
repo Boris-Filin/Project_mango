@@ -16,7 +16,7 @@ def prime_screen(screen_size):
 
 	return screen
 
-def prime_screen2(screen_size):
+def prime_screen(screen_size):
 	w = screen_size.x
 	h = screen_size.y
 
